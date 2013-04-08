@@ -59,7 +59,9 @@ from os import path
 from time import time
 from random import random
 from hashlib import sha1
-from cPickle import dump, load, HIGHEST_PROTOCOL
+from six.moves import cPickle
+dump, load, HIGHEST_PROTOCOL = (cPickle.dump, cPickle.load,
+                                cPickle.HIGHEST_PROTOCOL)
 
 from werkzeug.datastructures import CallbackDict
 from werkzeug.utils import dump_cookie, parse_cookie
@@ -206,7 +208,7 @@ class FilesystemSessionStore(SessionStore):
     """
 
     def __init__(self, path=None, filename_template='werkzeug_%s.sess',
-                 session_class=None, renew_missing=False, mode=0644):
+                 session_class=None, renew_missing=False, mode=420): #mode=0644
         SessionStore.__init__(self, session_class)
         if path is None:
             path = tempfile.gettempdir()

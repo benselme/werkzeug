@@ -63,7 +63,7 @@ try:
     from hashlib import md5
 except ImportError:
     from md5 import new as md5
-from itertools import izip
+from six.moves import zip as izip
 from time import time
 from werkzeug.posixemulation import rename
 
@@ -72,6 +72,7 @@ try:
 except ImportError:
     import pickle
 
+#izip = zip_.izip
 
 def _items(mappingorseq):
     """Wrapper for efficient iteration over mappings represented by dicts
@@ -585,7 +586,8 @@ class FileSystemCache(BaseCache):
     #: used for temporary files by the FileSystemCache
     _fs_transaction_suffix = '.__wz_cache'
 
-    def __init__(self, cache_dir, threshold=500, default_timeout=300, mode=0600):
+    def __init__(self, cache_dir, threshold=500, default_timeout=300, mode=384):
+        # mode=0600 in octal
         BaseCache.__init__(self, default_timeout)
         self._path = cache_dir
         self._threshold = threshold

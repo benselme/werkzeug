@@ -11,10 +11,10 @@
 import sys
 import time
 import urllib
-import httplib
+from six.moves import http_client as httplib
 import unittest
 from functools import update_wrapper
-from StringIO import StringIO
+from io import BytesIO
 
 from werkzeug.testsuite import WerkzeugTestCase
 
@@ -29,7 +29,7 @@ real_make_server = serving.make_server
 def silencestderr(f):
     def new_func(*args, **kwargs):
         old_stderr = sys.stderr
-        sys.stderr = StringIO()
+        sys.stderr = BytesIO()
         try:
             return f(*args, **kwargs)
         finally:

@@ -11,7 +11,10 @@
 import re
 import os
 import urllib
-import urlparse
+try:
+    import urllib.parse as urlparse
+except ImportError:
+    import urlparse
 import posixpath
 import mimetypes
 from itertools import chain, repeat

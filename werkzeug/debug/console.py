@@ -10,6 +10,7 @@
 """
 import sys
 import code
+import six
 from types import CodeType
 from werkzeug.utils import escape
 from werkzeug.local import Local
@@ -173,7 +174,7 @@ class _InteractiveConsole(code.InteractiveInterpreter):
 
     def runcode(self, code):
         try:
-            exec code in self.globals, self.locals
+            six.exec_(code, self.globals, self.locals)
         except Exception:
             self.showtraceback()
 

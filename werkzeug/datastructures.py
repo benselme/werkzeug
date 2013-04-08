@@ -12,7 +12,7 @@ import re
 import codecs
 import mimetypes
 from itertools import repeat
-
+import six
 from werkzeug._internal import _proxy_repr, _missing, _empty_stream
 
 
@@ -553,7 +553,7 @@ class MultiDict(TypeConversionDict):
         """
         try:
             return dict.pop(self, key)[0]
-        except KeyError, e:
+        except KeyError as e:
             if default is not _missing:
                 return default
             raise BadRequestKeyError(str(e))
@@ -563,7 +563,7 @@ class MultiDict(TypeConversionDict):
         try:
             item = dict.popitem(self)
             return (item[0], item[1][0])
-        except KeyError, e:
+        except KeyError as e:
             raise BadRequestKeyError(str(e))
 
     def poplist(self, key):
@@ -580,7 +580,7 @@ class MultiDict(TypeConversionDict):
         """Pop a ``(key, list)`` tuple from the dict."""
         try:
             return dict.popitem(self)
-        except KeyError, e:
+        except KeyError as e:
             raise BadRequestKeyError(str(e))
 
     def __copy__(self):
@@ -773,7 +773,7 @@ class OrderedMultiDict(MultiDict):
     def pop(self, key, default=_missing):
         try:
             buckets = dict.pop(self, key)
-        except KeyError, e:
+        except KeyError as e:
             if default is not _missing:
                 return default
             raise BadRequestKeyError(str(e))
@@ -784,7 +784,7 @@ class OrderedMultiDict(MultiDict):
     def popitem(self):
         try:
             key, buckets = dict.popitem(self)
-        except KeyError, e:
+        except KeyError as e:
             raise BadRequestKeyError(str(e))
         for bucket in buckets:
             bucket.unlink(self)
@@ -793,7 +793,7 @@ class OrderedMultiDict(MultiDict):
     def popitemlist(self):
         try:
             key, buckets = dict.popitem(self)
-        except KeyError, e:
+        except KeyError as e:
             raise BadRequestKeyError(str(e))
         for bucket in buckets:
             bucket.unlink(self)
@@ -1067,7 +1067,7 @@ class Headers(object):
         self._list.append((_key, _value))
 
     def _validate_value(self, value):
-        if isinstance(value, basestring) and ('\n' in value or '\r' in value):
+        if isinstance(value, six.string_types) and ('\n' in value or '\r' in value):
             raise ValueError('Detected newline in header value.  This is '
                 'a potential security problem')
 
@@ -1131,7 +1131,7 @@ class Headers(object):
 
     def __setitem__(self, key, value):
         """Like :meth:`set` but also supports index/slice based setting."""
-        if isinstance(key, (slice, int, long)):
+        if isinstance(key, (slice,) + six.integer_types):
             self._validate_value(value)
             self._list[key] = value
         else:
@@ -1409,7 +1409,7 @@ class FileMultiDict(MultiDict):
         if isinstance(file, FileStorage):
             value = file
         else:
-            if isinstance(file, basestring):
+            if isinstance(file, six.string_types):
                 if filename is None:
                     filename = file
                 file = open(file, 'rb')
@@ -1529,7 +1529,7 @@ class Accept(ImmutableList):
         to get the quality for the item.  If the item is not in the list, the
         returned quality is ``0``.
         """
-        if isinstance(key, basestring):
+        if isinstance(key, six.string_types):
             return self.quality(key)
         return list.__getitem__(self, key)
 
@@ -1566,7 +1566,7 @@ class Accept(ImmutableList):
            This used to raise :exc:`IndexError`, which was inconsistent
            with the list API.
         """
-        if isinstance(key, basestring):
+        if isinstance(key, six.string_types):
             for idx, (item, quality) in enumerate(self):
                 if self._value_matches(key, item):
                     return idx
@@ -2539,7 +2539,7 @@ class FileStorage(object):
         """
         from shutil import copyfileobj
         close_dst = False
-        if isinstance(dst, basestring):
+        if isinstance(dst, six.string_types):
             dst = file(dst, 'wb')
             close_dst = True
         try:

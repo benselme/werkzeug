@@ -14,6 +14,7 @@ import sys
 import inspect
 import traceback
 import codecs
+import six
 from tokenize import TokenError
 from werkzeug.utils import cached_property, escape
 from werkzeug.debug.console import Console
@@ -419,7 +420,7 @@ class Frame(object):
             code = compile(code, '<interactive>', mode)
         if mode != 'exec':
             return eval(code, self.globals, self.locals)
-        exec code in self.globals, self.locals
+        six.exec_(code, self.globals, self.locals)
 
     @cached_property
     def sourcelines(self):

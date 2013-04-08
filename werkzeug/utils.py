@@ -13,6 +13,7 @@
 import re
 import os
 import sys
+import six
 
 from werkzeug._internal import _iter_modules, _DictAccessorProperty, \
      _parse_signature, _missing
@@ -139,9 +140,10 @@ class HTMLBuilder(object):
     u'<p>&lt;foo&gt;</p>'
     """
 
-    from htmlentitydefs import name2codepoint
+    from six.moves import html_entities
+    name2codepoint = html_entities.name2codepoint
     _entity_re = re.compile(r'&([^;]+);')
-    _entities = name2codepoint.copy()
+    _entities = html_entities.name2codepoint.copy()
     _entities['apos'] = 39
     _empty_elements = set([
         'area', 'base', 'basefont', 'br', 'col', 'command', 'embed', 'frame',
@@ -167,7 +169,7 @@ class HTMLBuilder(object):
             raise AttributeError(tag)
         def proxy(*children, **arguments):
             buffer = '<' + tag
-            for key, value in arguments.iteritems():
+            for key, value in six.iteritems(arguments):
                 if value is None:
                     continue
                 if key[-1] == '_':
@@ -190,7 +192,7 @@ class HTMLBuilder(object):
                 return buffer
             buffer += '>'
 
-            children_as_string = ''.join([unicode(x) for x in children
+            children_as_string = ''.join([six.text_type(x) for x in children
                                          if x is not None])
 
             if children_as_string:
@@ -246,7 +248,7 @@ def format_string(string, context):
     """
     def lookup_arg(match):
         x = context[match.group(1) or match.group(2)]
-        if not isinstance(x, basestring):
+        if not isinstance(x, six.string_types):
             x = type(string)(x)
         return x
     return _format_re.sub(lookup_arg, string)
@@ -276,7 +278,7 @@ def secure_filename(filename):
 
     :param filename: the filename to secure
     """
-    if isinstance(filename, unicode):
+    if isinstance(filename, six.text_type):
         from unicodedata import normalize
         filename = normalize('NFKD', filename).encode('ascii', 'ignore')
     for sep in os.path.sep, os.path.altsep:
@@ -397,7 +399,7 @@ def import_string(import_name, silent=False):
     :return: imported object
     """
     # force the import name to automatically convert to strings
-    if isinstance(import_name, unicode):
+    if not six.PY3 and isinstance(import_name, unicode):
         import_name = str(import_name)
     try:
         if ':' in import_name:
@@ -408,7 +410,7 @@ def import_string(import_name, silent=False):
             return __import__(import_name)
         # __import__ is not able to handle unicode strings in the fromlist
         # if the module is a package
-        if isinstance(obj, unicode):
+        if not six.PY3 and isinstance(obj, unicode):
             obj = obj.encode('utf-8')
         try:
             return getattr(__import__(module, None, None, [obj]), obj)
@@ -418,9 +420,10 @@ def import_string(import_name, silent=False):
             modname = module + '.' + obj
             __import__(modname)
             return sys.modules[modname]
-    except ImportError, e:
+    except ImportError as e:
         if not silent:
-            raise ImportStringError(import_name, e), None, sys.exc_info()[2]
+            six.reraise(ImportStringError, ImportStringError(import_name, e),
+                        sys.exc_info()[2])
 
 
 def find_modules(import_path, include_packages=False, recursive=False):

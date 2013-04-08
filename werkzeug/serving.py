@@ -41,12 +41,25 @@ import os
 import socket
 import sys
 import time
-import thread
+try:
+    import _thread as thread
+except ImportError:
+    import thread
 import signal
 import subprocess
-from urllib import unquote
-from SocketServer import ThreadingMixIn, ForkingMixIn
-from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
+try:
+    from urllib.parse import unquote
+except ImportError:
+    from urllib import unquote
+try:
+    from socketserver import ThreadingMixIn, ForkingMixIn
+except ImportError:
+    from SocketServer import ThreadingMixIn, ForkingMixIn
+try:
+    from http.server import HTTPServer, BaseHTTPRequestHandler
+except ImportError:
+    from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
+import six
 
 import werkzeug
 from werkzeug._internal import _log
@@ -136,7 +149,7 @@ class WSGIRequestHandler(BaseHTTPRequestHandler, object):
             if exc_info:
                 try:
                     if headers_sent:
-                        raise exc_info[0], exc_info[1], exc_info[2]
+                        six.reraise(*exc_info)
                 finally:
                     exc_info = None
             elif headers_set:
@@ -159,7 +172,7 @@ class WSGIRequestHandler(BaseHTTPRequestHandler, object):
 
         try:
             execute(app)
-        except (socket.error, socket.timeout), e:
+        except (socket.error, socket.timeout) as e:
             self.connection_dropped(e, environ)
         except Exception:
             if self.server.passthrough_errors:
@@ -182,7 +195,7 @@ class WSGIRequestHandler(BaseHTTPRequestHandler, object):
         rv = None
         try:
             rv = BaseHTTPRequestHandler.handle(self)
-        except (socket.error, socket.timeout), e:
+        except (socket.error, socket.timeout) as e:
             self.connection_dropped(e)
         except Exception:
             if self.server.ssl_context is None or not is_ssl_error():
@@ -717,7 +730,7 @@ def main():
             port = address[1]
 
     if len(args) != 1:
-        print 'No application supplied, or too much. See --help'
+        print('No application supplied, or too much. See --help')
         sys.exit(1)
     app = import_string(args[0])
 

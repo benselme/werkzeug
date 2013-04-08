@@ -10,14 +10,18 @@
 """
 import inspect
 from weakref import WeakKeyDictionary
-from cStringIO import StringIO
-from Cookie import SimpleCookie, Morsel, CookieError
+from io import BytesIO
+from six.moves import http_cookies
+from six import b
 from time import gmtime
 from datetime import datetime, date
 
+SimpleCookie = http_cookies.SimpleCookie
+Morsel = http_cookies.Morsel
+CookieError = http_cookies.CookieError
 
 _logger = None
-_empty_stream = StringIO('')
+_empty_stream = BytesIO(b(""))
 _signature_cache = WeakKeyDictionary()
 _epoch_ord = date(1970, 1, 1).toordinal()
 
@@ -205,7 +209,7 @@ def _decode_unicode(value, charset, errors):
         errors = 'strict'
     try:
         return value.decode(charset, errors)
-    except UnicodeError, e:
+    except UnicodeError as e:
         if fallback is not None:
             return value.decode(fallback, 'replace')
         from werkzeug.exceptions import HTTPUnicodeError

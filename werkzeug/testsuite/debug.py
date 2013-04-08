@@ -11,6 +11,7 @@
 import unittest
 import sys
 import re
+import six
 
 from werkzeug.testsuite import WerkzeugTestCase
 
@@ -73,7 +74,7 @@ class DebugReprTestCase(WerkzeugTestCase):
     def test_regex_repr(self):
         assert debug_repr(re.compile(r'foo\d')) == \
             u're.compile(<span class="string regex">r\'foo\\d\'</span>)'
-        assert debug_repr(re.compile(ur'foo\d')) == \
+        assert debug_repr(re.compile(six.u(r'foo\d'))) == \
             u're.compile(<span class="string regex">ur\'foo\\d\'</span>)'
 
     def test_set_repr(self):

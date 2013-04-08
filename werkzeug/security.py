@@ -11,7 +11,7 @@
 import os
 import hmac
 import posixpath
-from itertools import izip
+from six.moves import zip as izip
 from random import SystemRandom
 
 
