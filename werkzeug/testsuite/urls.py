@@ -10,7 +10,7 @@
 """
 
 import unittest
-from StringIO import StringIO
+from io import BytesIO
 
 from werkzeug.testsuite import WerkzeugTestCase
 
@@ -44,10 +44,10 @@ class URLsTestCase(WerkzeugTestCase):
         assert x[u'Üh'] == u'Hänsel'
 
     def test_streamed_url_decoding(self):
-        item1 = 'a' * 100000
-        item2 = 'b' * 400
-        string = 'a=%s&b=%s&c=%s' % (item1, item2, item2)
-        gen = urls.url_decode_stream(StringIO(string), limit=len(string),
+        item1 = b'a' * 100000
+        item2 = b'b' * 400
+        string = b'a=' + item1 + b'&b=' + item2 + b'&c=' + item2
+        gen = urls.url_decode_stream(BytesIO(string), limit=len(string),
                                      return_iterator=True)
         self.assert_equal(gen.next(), ('a', item1))
         self.assert_equal(gen.next(), ('b', item2))
@@ -66,22 +66,22 @@ class URLsTestCase(WerkzeugTestCase):
                           key=lambda x: x[0].lower() + x[0]) == 'A=1&a=2&B=3&b=4'
 
     def test_streamed_url_encoding(self):
-        out = StringIO()
-        urls.url_encode_stream({'foo': 'bar 45'}, out)
-        self.assert_equal(out.getvalue(), 'foo=bar+45')
+        out = BytesIO()
+        urls.url_encode_stream({b'foo': b'bar 45'}, out)
+        self.assert_equal(out.getvalue(), b'foo=bar+45')
 
-        d = {'foo': 1, 'bar': 23, 'blah': u'Hänsel'}
-        out = StringIO()
+        d = {b'foo': 1, b'bar': 23, b'blah': u'Hänsel'}
+        out = BytesIO()
         urls.url_encode_stream(d, out, sort=True)
-        self.assert_equal(out.getvalue(), 'bar=23&blah=H%C3%A4nsel&foo=1')
-        out = StringIO()
+        self.assert_equal(out.getvalue(), b'bar=23&blah=H%C3%A4nsel&foo=1')
+        out = BytesIO()
         urls.url_encode_stream(d, out, sort=True, separator=';')
-        self.assert_equal(out.getvalue(), 'bar=23;blah=H%C3%A4nsel;foo=1')
+        self.assert_equal(out.getvalue(), b'bar=23;blah=H%C3%A4nsel;foo=1')
 
         gen = urls.url_encode_stream(d, sort=True)
-        self.assert_equal(gen.next(), 'bar=23')
-        self.assert_equal(gen.next(), 'blah=H%C3%A4nsel')
-        self.assert_equal(gen.next(), 'foo=1')
+        self.assert_equal(gen.next(), b'bar=23')
+        self.assert_equal(gen.next(), b'blah=H%C3%A4nsel')
+        self.assert_equal(gen.next(), b'foo=1')
         self.assert_raises(StopIteration, gen.next)
 
     def test_url_fixing(self):

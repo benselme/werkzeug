@@ -10,7 +10,7 @@
 """
 import unittest
 import pickle
-from StringIO import StringIO
+from io import BytesIO
 from datetime import datetime
 
 from werkzeug.testsuite import WerkzeugTestCase
@@ -440,7 +440,7 @@ class WrappersTestCase(WerkzeugTestCase):
         data = (
             '--blah\r\n'
         )
-        data = wrappers.Request.from_values(input_stream=StringIO(data),
+        data = wrappers.Request.from_values(input_stream=BytesIO(data),
                                             content_length=len(data),
                                             content_type='multipart/form-data; boundary=foo',
                                             method='POST')
@@ -476,7 +476,7 @@ class WrappersTestCase(WerkzeugTestCase):
 
     def test_other_method_payload(self):
         data = 'Hello World'
-        req = wrappers.Request.from_values(input_stream=StringIO(data),
+        req = wrappers.Request.from_values(input_stream=BytesIO(data),
                                            content_length=len(data),
                                            content_type='text/plain',
                                            method='WHAT_THE_FUCK')
