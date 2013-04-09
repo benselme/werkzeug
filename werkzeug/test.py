@@ -269,16 +269,16 @@ class EnvironBuilder(object):
         if query_string is None and '?' in path:
             path, query_string = path.split('?', 1)
         self.charset = charset
-        if isinstance(path, unicode):
+        if isinstance(path, six.text_type):
             path = iri_to_uri(path, charset)
         self.path = path
         if base_url is not None:
-            if isinstance(base_url, unicode):
+            if isinstance(base_url, six.text_type):
                 base_url = iri_to_uri(base_url, charset)
             else:
                 base_url = url_fix(base_url, charset)
         self.base_url = base_url
-        if isinstance(query_string, basestring):
+        if isinstance(query_string, six.string_types):
             self.query_string = query_string
         else:
             if query_string is None:

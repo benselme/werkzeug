@@ -599,7 +599,7 @@ def make_chunk_iter_func(stream, limit, buffer_size):
     """Helper for the line and chunk iter functions."""
     if hasattr(stream, 'read'):
         return partial(make_limited_stream(stream, limit).read, buffer_size)
-    return iter(chain(stream, repeat(''))).next
+    return partial(six.next, iter(chain(stream, repeat(''))))
 
 
 def make_line_iter(stream, limit=None, buffer_size=10 * 1024):

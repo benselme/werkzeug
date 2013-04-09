@@ -233,14 +233,17 @@ class WSGIUtilsTestCase(WerkzeugTestCase):
         self.assert_equal(lines, ['abcdef\r\n', 'ghijkl\r\n', 'mnopqrstuvwxyz\r\n', 'ABCDEFGHIJK'])
 
     def test_make_chunk_iter(self):
-        data = ['abcdefXghi', 'jklXmnopqrstuvwxyzX', 'ABCDEFGHIJK']
+        data = [b'abcdefXghi', b'jklXmnopqrstuvwxyzX', b'ABCDEFGHIJK']
         rv = list(wsgi.make_chunk_iter(data, 'X'))
-        self.assert_equal(rv, ['abcdef', 'ghijkl', 'mnopqrstuvwxyz', 'ABCDEFGHIJK'])
+        self.assert_equal(rv, [b'abcdef', b'ghijkl', b'mnopqrstuvwxyz',
+                               b'ABCDEFGHIJK'])
 
-        data = 'abcdefXghijklXmnopqrstuvwxyzXABCDEFGHIJK'
+        data = b'abcdefXghijklXmnopqrstuvwxyzXABCDEFGHIJK'
         test_stream = BytesIO(data)
-        rv = list(wsgi.make_chunk_iter(test_stream, 'X', limit=len(data), buffer_size=4))
-        self.assert_equal(rv, ['abcdef', 'ghijkl', 'mnopqrstuvwxyz', 'ABCDEFGHIJK'])
+        rv = list(wsgi.make_chunk_iter(test_stream, 'X', limit=len(data),
+                                       buffer_size=4))
+        self.assert_equal(rv, [b'abcdef', b'ghijkl', b'mnopqrstuvwxyz',
+                               b'ABCDEFGHIJK'])
 
     def test_lines_longer_buffer_size(self):
         data = '1234567890\n1234567890\n'
