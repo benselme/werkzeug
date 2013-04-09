@@ -1,0 +1,3 @@
+*url_encode, url_encode_stream:
+** as_bytes param
+** sorted: need to pass sortable things !

@@ -42,6 +42,8 @@ _hextochr = dict((a + b, chr(int(a + b, 16)))
 if six.PY3:
     _quote = urlparse.quote
     _quote_plus = urlparse.quote_plus
+    _unquote = urlparse.unquote
+    _unquote_plus = urlparse.unquote_plus
 else:
     def _quote(s, safe='/', _join=''.join):
         assert isinstance(s, str), 'quote only works on bytes'
@@ -61,6 +63,27 @@ else:
             return _quote(s, safe + ' ').replace(' ', '+')
         return _quote(s, safe)
 
+    def _unquote(s, unsafe=''):
+        assert isinstance(s, str), 'unquote only works on bytes'
+        rv = s.split('%')
+        if len(rv) == 1:
+            return s
+        s = rv[0]
+        for item in rv[1:]:
+            try:
+                char = _hextochr[item[:2]]
+                if char in unsafe:
+                    raise KeyError()
+                s += char + item[2:]
+            except KeyError:
+                s += '%' + item
+        return s
+
+
+    def _unquote_plus(s):
+        return _unquote(s.replace('+', ' '))
+
+
 
 def _safe_urlsplit(s):
     """the urlparse.urlsplit cache breaks if it contains unicode and
@@ -76,27 +99,6 @@ def _safe_urlsplit(s):
         rv = urlparse.urlsplit(s)
         assert type(rv[2]) is type(s)
     return rv
-
-
-def _unquote(s, unsafe=''):
-    assert isinstance(s, str), 'unquote only works on bytes'
-    rv = s.split('%')
-    if len(rv) == 1:
-        return s
-    s = rv[0]
-    for item in rv[1:]:
-        try:
-            char = _hextochr[item[:2]]
-            if char in unsafe:
-                raise KeyError()
-            s += char + item[2:]
-        except KeyError:
-            s += '%' + item
-    return s
-
-
-def _unquote_plus(s):
-    return _unquote(s.replace('+', ' '))
 
 
 def _uri_split(uri):
@@ -392,8 +394,8 @@ def url_quote(s, charset='utf-8', safe='/:'):
     :param charset: the charset to be used.
     :param safe: an optional sequence of safe characters.
     """
-    if isinstance(s, unicode):
-        s = s.encode(charset)
+    if isinstance(s, (bytes,) + six.string_types):
+        s = force_str(s, charset)
     elif not isinstance(s, str):
         s = str(s)
     return _quote(s, safe=safe)
@@ -407,8 +409,8 @@ def url_quote_plus(s, charset='utf-8', safe=''):
     :param charset: the charset to be used.
     :param safe: an optional sequence of safe characters.
     """
-    if isinstance(s, unicode):
-        s = s.encode(charset)
+    if isinstance(s, (bytes,) + six.string_types):
+        s = force_str(s)
     elif not isinstance(s, str):
         s = str(s)
     return _quote_plus(s, safe=safe)
@@ -425,8 +427,7 @@ def url_unquote(s, charset='utf-8', errors='replace'):
     :param charset: the charset to be used.
     :param errors: the error handling for the charset decoding.
     """
-    if isinstance(s, unicode):
-        s = s.encode(charset)
+    s = force_str(s, charset)
     return _decode_unicode(_unquote(s), charset, errors)
 
 
