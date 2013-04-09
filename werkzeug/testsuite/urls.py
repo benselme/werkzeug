@@ -167,8 +167,8 @@ class URLsTestCase(WerkzeugTestCase):
 
     def test_quoting_of_local_urls(self):
         rv = urls.iri_to_uri(u'/foo\x8f')
-        assert rv == '/foo%C2%8F'
-        assert type(rv) is str
+        assert rv == b'/foo%C2%8F'
+        assert type(rv) is bytes
 
 
 def suite():
