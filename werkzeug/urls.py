@@ -8,6 +8,8 @@
     :copyright: (c) 2011 by the Werkzeug Team, see AUTHORS for more details.
     :license: BSD, see LICENSE for more details.
 """
+from werkzeug.utils import force_str
+
 try:
     import urllib.parse as urlparse
 except ImportError:
@@ -427,8 +429,7 @@ def url_unquote_plus(s, charset='utf-8', errors='replace'):
     :param charset: the charset to be used.
     :param errors: the error handling for the charset decoding.
     """
-    if isinstance(s, unicode):
-        s = s.encode(charset)
+    s = force_str(s)
     return _decode_unicode(_unquote_plus(s), charset, errors)
 
 

@@ -601,6 +601,26 @@ class ImportStringError(ImportError):
                                  self.exception)
 
 
+def force_bytes(s, encoding='utf-8', errors='strict'):
+    if isinstance(s, bytes):
+        if encoding == 'utf-8':
+            return s
+        else:
+            return s.decode('utf-8', errors).encode(encoding, errors)
+    else:
+        return s.encode(encoding, errors)
+
+
+def force_text(s, encoding='utf-8', errors='strict'):
+    if isinstance(s, six.text_type):
+        return s
+    return s.decode(encoding, errors)
+
+if six.PY3:
+    force_str = force_text
+else:
+    force_str = force_bytes
+
 # circular dependencies
 from werkzeug.http import quote_header_value, unquote_header_value, \
      cookie_date

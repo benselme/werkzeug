@@ -9,6 +9,7 @@
     :license: BSD, see LICENSE for more details.
 """
 import inspect
+import six
 from weakref import WeakKeyDictionary
 from io import BytesIO
 from six.moves import http_cookies
@@ -203,6 +204,8 @@ def _patch_wrapper(old, new):
 def _decode_unicode(value, charset, errors):
     """Like the regular decode function but this one raises an
     `HTTPUnicodeError` if errors is `strict`."""
+    if isinstance(value, six.text_type):
+        return value
     fallback = None
     if errors.startswith('fallback:'):
         fallback = errors[9:]
