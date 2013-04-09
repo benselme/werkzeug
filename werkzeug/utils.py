@@ -10,11 +10,10 @@
     :copyright: (c) 2011 by the Werkzeug Team, see AUTHORS for more details.
     :license: BSD, see LICENSE for more details.
 """
+import sys
 import re
 import os
-import sys
 import six
-
 from werkzeug._internal import _iter_modules, _DictAccessorProperty, \
      _parse_signature, _missing
 
@@ -600,34 +599,13 @@ class ImportStringError(ImportError):
         return '<%s(%r, %r)>' % (self.__class__.__name__, self.import_name,
                                  self.exception)
 
-
-def force_bytes(s, encoding='utf-8', errors='strict'):
-    if isinstance(s, bytes):
-        if encoding == 'utf-8':
-            return s
-        else:
-            return s.decode('utf-8', errors).encode(encoding, errors)
-    else:
-        return s.encode(encoding, errors)
-
-
-def force_text(s, encoding='utf-8', errors='strict'):
-    if isinstance(s, six.text_type):
-        return s
-    return s.decode(encoding, errors)
-
-if six.PY3:
-    force_str = force_text
-else:
-    force_str = force_bytes
-
 # circular dependencies
 from werkzeug.http import quote_header_value, unquote_header_value, \
-     cookie_date
+    cookie_date
 
 # DEPRECATED
 # these objects were previously in this module as well.  we import
 # them here for backwards compatibility with old pickles.
 from werkzeug.datastructures import MultiDict, CombinedMultiDict, \
-     Headers, EnvironHeaders
+    Headers, EnvironHeaders
 from werkzeug.http import parse_cookie, dump_cookie

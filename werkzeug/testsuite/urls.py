@@ -50,9 +50,9 @@ class URLsTestCase(WerkzeugTestCase):
         string = b'a=' + item1 + b'&b=' + item2 + b'&c=' + item2
         gen = urls.url_decode_stream(BytesIO(string), limit=len(string),
                                      return_iterator=True)
-        self.assert_equal(gen.next(), ('a', item1))
-        self.assert_equal(gen.next(), ('b', item2))
-        self.assert_equal(gen.next(), ('c', item2))
+        self.assert_equal(six.next(gen), ('a', item1))
+        self.assert_equal(six.next(gen), ('b', item2))
+        self.assert_equal(six.next(gen), ('c', item2))
         self.assert_raises(StopIteration, gen.next)
 
     def test_url_encoding(self):
@@ -68,22 +68,23 @@ class URLsTestCase(WerkzeugTestCase):
 
     def test_streamed_url_encoding(self):
         out = BytesIO()
-        urls.url_encode_stream({b'foo': b'bar 45'}, out)
+        urls.url_encode_stream({b'foo': b'bar 45'}, out, as_bytes=True)
         self.assert_equal(out.getvalue(), b'foo=bar+45')
 
         d = {b'foo': 1, b'bar': 23, b'blah': u'Hänsel'}
         out = BytesIO()
-        urls.url_encode_stream(d, out, sort=True)
+        urls.url_encode_stream(d, out, sort=True, as_bytes=True)
         self.assert_equal(out.getvalue(), b'bar=23&blah=H%C3%A4nsel&foo=1')
         out = BytesIO()
-        urls.url_encode_stream(d, out, sort=True, separator=';')
+        urls.url_encode_stream(d, out, sort=True, separator=';', as_bytes=True)
         self.assert_equal(out.getvalue(), b'bar=23;blah=H%C3%A4nsel;foo=1')
 
-        gen = urls.url_encode_stream(d, sort=True)
-        self.assert_equal(gen.next(), b'bar=23')
-        self.assert_equal(gen.next(), b'blah=H%C3%A4nsel')
-        self.assert_equal(gen.next(), b'foo=1')
-        self.assert_raises(StopIteration, gen.next)
+        gen = urls.url_encode_stream(d, sort=True, as_bytes=True)
+        self.assert_equal(six.next(gen), b'bar=23')
+        self.assert_equal(six.next(gen), b'blah=H%C3%A4nsel')
+        self.assert_equal(six.next(gen), b'foo=1')
+        with self.assert_raises(StopIteration):
+            six.next(gen)
 
     def test_url_fixing(self):
         x = urls.url_fix(u'http://de.wikipedia.org/wiki/Elf (Begriffskl\xe4rung)')

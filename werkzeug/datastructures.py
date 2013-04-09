@@ -31,7 +31,7 @@ def iter_multi_items(mapping):
         for item in mapping.iteritems(multi=True):
             yield item
     elif isinstance(mapping, dict):
-        for key, value in mapping.iteritems():
+        for key, value in six.iteritems(mapping):
             if isinstance(value, (tuple, list)):
                 for value in value:
                     yield key, value

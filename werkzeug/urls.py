@@ -8,14 +8,15 @@
     :copyright: (c) 2011 by the Werkzeug Team, see AUTHORS for more details.
     :license: BSD, see LICENSE for more details.
 """
-from werkzeug.utils import force_str
+import six
+from werkzeug._internal import force_str
 
 try:
     import urllib.parse as urlparse
 except ImportError:
     import urlparse
 
-from werkzeug._internal import _decode_unicode
+from werkzeug._internal import _decode_unicode, force_bytes
 from werkzeug.datastructures import MultiDict, iter_multi_items
 from werkzeug.wsgi import make_chunk_iter
 from six.moves import xrange
@@ -38,24 +39,27 @@ _hexdig = '0123456789ABCDEFabcdef'
 _hextochr = dict((a + b, chr(int(a + b, 16)))
                  for a in _hexdig for b in _hexdig)
 
+if six.PY3:
+    _quote = urlparse.quote
+    _quote_plus = urlparse.quote_plus
+else:
+    def _quote(s, safe='/', _join=''.join):
+        assert isinstance(s, str), 'quote only works on bytes'
+        if not s or not s.rstrip(_always_safe + safe):
+            return s
+        try:
+            quoter = _safemaps[safe]
+        except KeyError:
+            safe_map = _safe_map.copy()
+            safe_map.update([(c, c) for c in safe])
+            _safemaps[safe] = quoter = safe_map.__getitem__
+        return _join(map(quoter, s))
 
-def _quote(s, safe='/', _join=''.join):
-    assert isinstance(s, str), 'quote only works on bytes'
-    if not s or not s.rstrip(_always_safe + safe):
-        return s
-    try:
-        quoter = _safemaps[safe]
-    except KeyError:
-        safe_map = _safe_map.copy()
-        safe_map.update([(c, c) for c in safe])
-        _safemaps[safe] = quoter = safe_map.__getitem__
-    return _join(map(quoter, s))
 
-
-def _quote_plus(s, safe=''):
-    if ' ' in s:
-        return _quote(s, safe + ' ').replace(' ', '+')
-    return _quote(s, safe)
+    def _quote_plus(s, safe=''):
+        if ' ' in s:
+            return _quote(s, safe + ' ').replace(' ', '+')
+        return _quote(s, safe)
 
 
 def _safe_urlsplit(s):
@@ -303,7 +307,7 @@ def _url_decode_impl(pair_iter, charset, decode_keys, include_empty,
 
 
 def url_encode(obj, charset='utf-8', encode_keys=False, sort=False, key=None,
-               separator='&'):
+               separator='&', as_bytes=False):
     """URL encode a dict/`MultiDict`.  If a value is `None` it will not appear
     in the result string.  Per default only values are encoded into the target
     charset strings.  If `encode_keys` is set to ``True`` unicode keys are
@@ -323,11 +327,12 @@ def url_encode(obj, charset='utf-8', encode_keys=False, sort=False, key=None,
     :param key: an optional function to be used for sorting.  For more details
                 check out the :func:`sorted` documentation.
     """
-    return separator.join(_url_encode_impl(obj, charset, encode_keys, sort, key))
+    return separator.join(_url_encode_impl(obj, charset, encode_keys, sort,
+                                           key, as_bytes))
 
 
 def url_encode_stream(obj, stream=None, charset='utf-8', encode_keys=False,
-                      sort=False, key=None, separator='&'):
+                      sort=False, key=None, separator='&', as_bytes=False):
     """Like :meth:`url_encode` but writes the results to a stream
     object.  If the stream is `None` a generator over all encoded
     pairs is returned.
@@ -345,31 +350,39 @@ def url_encode_stream(obj, stream=None, charset='utf-8', encode_keys=False,
     :param key: an optional function to be used for sorting.  For more details
                 check out the :func:`sorted` documentation.
     """
-    gen = _url_encode_impl(obj, charset, encode_keys, sort, key)
+    gen = _url_encode_impl(obj, charset, encode_keys, sort, key, as_bytes)
     if stream is None:
         return gen
+    if as_bytes:
+        separator = force_bytes(separator)
+    # The stream should by able to write bytes if as_bytes == True
+    # and strings if as_bytes == False
     for idx, chunk in enumerate(gen):
         if idx:
             stream.write(separator)
         stream.write(chunk)
 
 
-def _url_encode_impl(obj, charset, encode_keys, sort, key):
+def _url_encode_impl(obj, charset, encode_keys, sort, key, as_bytes):
     iterable = iter_multi_items(obj)
     if sort:
         iterable = sorted(iterable, key=key)
     for key, value in iterable:
         if value is None:
             continue
-        if encode_keys and isinstance(key, unicode):
-            key = key.encode(charset)
+        if six.PY3 and isinstance(key, bytes) or\
+                        encode_keys and isinstance(key, unicode):
+            key = force_str(key, charset)
         else:
             key = str(key)
-        if isinstance(value, unicode):
-            value = value.encode(charset)
+        if isinstance(value, (bytes,) + six.string_types):
+            value = force_str(value, charset)
         else:
             value = str(value)
-        yield '%s=%s' % (_quote(key), _quote_plus(value))
+        encoded_item = '{}={}'.format(_quote(key), _quote_plus(value))
+        if as_bytes:
+            encoded_item = encoded_item.encode(charset)
+        yield encoded_item
 
 
 def url_quote(s, charset='utf-8', safe='/:'):
@@ -446,8 +459,7 @@ def url_fix(s, charset='utf-8'):
     :param charset: The target charset for the URL if the url was given as
                     unicode string.
     """
-    if isinstance(s, unicode):
-        s = s.encode(charset, 'replace')
+    s = force_str(s, charset, 'replace')
     scheme, netloc, path, qs, anchor = _safe_urlsplit(s)
     path = _quote(path, '/%')
     qs = _quote_plus(qs, ':&%=')
