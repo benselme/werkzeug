@@ -363,10 +363,10 @@ def url_encode_stream(obj, stream=None, charset='utf-8', encode_keys=False,
         stream.write(chunk)
 
 
-def _url_encode_impl(obj, charset, encode_keys, sort, key, as_bytes):
+def _url_encode_impl(obj, charset, encode_keys, sort, sort_key, as_bytes):
     iterable = iter_multi_items(obj)
     if sort:
-        iterable = sorted(iterable, key=key)
+        iterable = sorted(iterable, key=sort_key)
     for key, value in iterable:
         if value is None:
             continue
