@@ -12,6 +12,7 @@
 import unittest
 from io import BytesIO
 import six
+from werkzeug._internal import force_str
 
 from werkzeug.testsuite import WerkzeugTestCase
 
@@ -50,10 +51,11 @@ class URLsTestCase(WerkzeugTestCase):
         string = b'a=' + item1 + b'&b=' + item2 + b'&c=' + item2
         gen = urls.url_decode_stream(BytesIO(string), limit=len(string),
                                      return_iterator=True)
-        self.assert_equal(six.next(gen), ('a', item1))
-        self.assert_equal(six.next(gen), ('b', item2))
-        self.assert_equal(six.next(gen), ('c', item2))
-        self.assert_raises(StopIteration, gen.next)
+        self.assert_equal(six.next(gen), ('a', force_str(item1)))
+        self.assert_equal(six.next(gen), ('b', force_str(item2)))
+        self.assert_equal(six.next(gen), ('c', force_str(item2)))
+        with self.assert_raises(StopIteration):
+            six.next(gen)
 
     def test_url_encoding(self):
         assert urls.url_encode({'foo': 'bar 45'}) == 'foo=bar+45'
@@ -96,22 +98,25 @@ class URLsTestCase(WerkzeugTestCase):
         assert x == 'http://example.com/?foo=%2f%2f'
 
     def test_iri_support(self):
-        self.assert_raises(UnicodeError, urls.uri_to_iri, u'http://föö.com/')
-        self.assert_raises(UnicodeError, urls.iri_to_uri, 'http://föö.com/')
+        with self.assert_raises(UnicodeError):
+            urls.uri_to_iri(u'http://föö.com/')
+        with self.assert_raises(UnicodeError):
+            urls.iri_to_uri(b'http://f\x94\x94.com/')
         assert urls.uri_to_iri('http://xn--n3h.net/') == u'http://\u2603.net/'
         assert urls.uri_to_iri('http://%C3%BCser:p%C3%A4ssword@xn--n3h.net/p%C3%A5th') == \
             u'http://\xfcser:p\xe4ssword@\u2603.net/p\xe5th'
-        assert urls.iri_to_uri(u'http://☃.net/') == 'http://xn--n3h.net/'
+        assert urls.iri_to_uri(u'http://☃.net/') == b'http://xn--n3h.net/'
         assert urls.iri_to_uri(u'http://üser:pässword@☃.net/påth') == \
-            'http://%C3%BCser:p%C3%A4ssword@xn--n3h.net/p%C3%A5th'
+            b'http://%C3%BCser:p%C3%A4ssword@xn--n3h.net/p%C3%A5th'
 
-        assert urls.uri_to_iri('http://test.com/%3Fmeh?foo=%26%2F') == \
-            u'http://test.com/%3Fmeh?foo=%26%2F'
+        self.assertEqual(
+            urls.uri_to_iri('http://test.com/%3Fmeh?foo=%26%2F'),
+            u'http://test.com/%3Fmeh?foo=%26%2F')
 
         # this should work as well, might break on 2.4 because of a broken
         # idna codec
         assert urls.uri_to_iri('/foo') == u'/foo'
-        assert urls.iri_to_uri(u'/foo') == '/foo'
+        assert urls.iri_to_uri(u'/foo') == b'/foo'
 
     def test_ordered_multidict_encoding(self):
         d = OrderedMultiDict()

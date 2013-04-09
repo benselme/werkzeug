@@ -8,6 +8,7 @@
     :copyright: (c) 2011 by the Werkzeug Team, see AUTHORS for more details.
     :license: BSD, see LICENSE for more details.
 """
+import re
 import six
 from werkzeug._internal import force_str
 
@@ -42,7 +43,13 @@ _hextochr = dict((a + b, chr(int(a + b, 16)))
 if six.PY3:
     _quote = urlparse.quote
     _quote_plus = urlparse.quote_plus
-    _unquote = urlparse.unquote
+    def _unquote(s, unsafe=''):
+        if unsafe:
+            regex = '({})'.format(
+                '|'.join(re.escape('%' + hex(ord(c)).lstrip('0x').upper())
+                         for c in unsafe))
+            s = re.sub(regex, lambda m: '%25' + m.group(0)[1:], s)
+        return urlparse.unquote(s)
     _unquote_plus = urlparse.unquote_plus
 else:
     def _quote(s, safe='/', _join=''.join):
@@ -136,7 +143,8 @@ def iri_to_uri(iri, charset='utf-8'):
     :param iri: the iri to convert
     :param charset: the charset for the URI
     """
-    iri = unicode(iri)
+    if not isinstance(iri, six.text_type):
+        iri = iri.decode('utf-8')
     scheme, auth, hostname, port, path, query, fragment = _uri_split(iri)
 
     scheme = scheme.encode('ascii')
@@ -149,16 +157,20 @@ def iri_to_uri(iri, charset='utf-8'):
         auth = _quote(auth.encode(charset))
         if password:
             auth += ':' + _quote(password.encode(charset))
-        hostname = auth + '@' + hostname
+        hostname = force_bytes(auth, 'ascii') + b'@' + hostname
     if port:
-        hostname += ':' + port
+        hostname += b':' + force_bytes(port, 'ascii')
 
     path = _quote(path.encode(charset), safe="/:~+%")
     query = _quote(query.encode(charset), safe="=%&[]:;$()+,!?*/")
+    if six.PY3:
+        path = path.encode('ascii')
+        query = query.encode('ascii')
 
+    uri = urlparse.urlunsplit([scheme, hostname, path, query, fragment])
     # this absolutely always must return a string.  Otherwise some parts of
     # the system might perform double quoting (#61)
-    return str(urlparse.urlunsplit([scheme, hostname, path, query, fragment]))
+    return uri if six.PY3 else str(uri)
 
 
 def uri_to_iri(uri, charset='utf-8', errors='replace'):
@@ -182,13 +194,20 @@ def uri_to_iri(uri, charset='utf-8', errors='replace'):
     :param charset: the charset of the URI
     :param errors: the error handling on decode
     """
-    uri = url_fix(str(uri), charset)
+    if six.PY3:
+        uri = uri.encode('ascii').decode('utf-8')
+    else:
+        uri = str(uri)
+    uri = url_fix(uri, charset)
     scheme, auth, hostname, port, path, query, fragment = _uri_split(uri)
 
     scheme = _decode_unicode(scheme, 'ascii', errors)
 
     try:
-        hostname = hostname.decode('idna')
+        if six.PY3:
+            hostname = hostname.encode('utf-8').decode('idna')
+        else:
+            hostname = hostname.decode('idna')
     except UnicodeError:
         # dammit, that codec raised an error.  Because it does not support
         # any error handling we have to fake it.... badly
@@ -295,6 +314,7 @@ def _url_decode_impl(pair_iter, charset, decode_keys, include_empty,
     for pair in pair_iter:
         if not pair:
             continue
+        pair = force_str(pair, charset)
         if '=' in pair:
             key, value = pair.split('=', 1)
         else:

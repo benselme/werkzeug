@@ -11,6 +11,8 @@
 import re
 import os
 import urllib
+import six
+
 try:
     import urllib.parse as urlparse
 except ImportError:
@@ -23,7 +25,7 @@ from time import time, mktime
 from datetime import datetime
 from functools import partial
 
-from werkzeug._internal import _patch_wrapper
+from werkzeug._internal import _patch_wrapper, force_bytes
 from werkzeug.http import is_resource_modified, http_date
 
 
@@ -675,7 +677,9 @@ def make_chunk_iter(stream, separator, limit=None, buffer_size=10 * 1024):
     :param buffer_size: The optional buffer size.
     """
     _read = make_chunk_iter_func(stream, limit, buffer_size)
-    _split = re.compile(r'(%s)' % re.escape(separator)).split
+    regex = force_bytes('({})'.format(re.escape(separator)))
+    _split = re.compile(regex).split
+    separator = force_bytes(separator)
     buffer = []
     while 1:
         new_data = _read()
@@ -685,13 +689,13 @@ def make_chunk_iter(stream, separator, limit=None, buffer_size=10 * 1024):
         new_buf = []
         for item in chain(buffer, chunks):
             if item == separator:
-                yield ''.join(new_buf)
+                yield b''.join(new_buf)
                 new_buf = []
             else:
                 new_buf.append(item)
         buffer = new_buf
     if buffer:
-        yield ''.join(buffer)
+        yield b''.join(buffer)
 
 
 class LimitedStream(object):
