@@ -213,7 +213,7 @@ def extract_path_info(environ_or_baseurl, path_or_url, charset='utf-8',
     from werkzeug.urls import uri_to_iri, url_fix
 
     def _as_iri(obj):
-        if not isinstance(obj, unicode):
+        if not isinstance(obj, six.text_type):
             return uri_to_iri(obj, charset, errors)
         return obj
 
@@ -236,7 +236,9 @@ def extract_path_info(environ_or_baseurl, path_or_url, charset='utf-8',
     if isinstance(environ_or_baseurl, dict):
         environ_or_baseurl = get_current_url(environ_or_baseurl,
                                              root_only=True)
-    base_iri = _as_iri(environ_or_baseurl)
+        base_iri = uri_to_iri(environ_or_baseurl)
+    else:
+        base_iri = _as_iri(environ_or_baseurl)
     base_scheme, base_netloc, base_path, = \
         urlparse.urlsplit(base_iri)[:3]
     cur_scheme, cur_netloc, cur_path, = \
@@ -330,10 +332,10 @@ class SharedDataMiddleware(object):
         self.exports = {}
         self.cache = cache
         self.cache_timeout = cache_timeout
-        for key, value in exports.iteritems():
+        for key, value in six.iteritems(exports):
             if isinstance(value, tuple):
                 loader = self.get_package_loader(*value)
-            elif isinstance(value, basestring):
+            elif isinstance(value, six.string_types):
                 if os.path.isfile(value):
                     loader = self.get_file_loader(value)
                 else:
@@ -402,7 +404,7 @@ class SharedDataMiddleware(object):
         return 'wzsdm-%d-%s-%s' % (
             mktime(mtime.timetuple()),
             file_size,
-            adler32(real_filename) & 0xffffffff
+            adler32(force_bytes(real_filename)) & 0xffffffff
         )
 
     def __call__(self, environ, start_response):
@@ -414,7 +416,7 @@ class SharedDataMiddleware(object):
         path = '/'.join([''] + [x for x in cleaned_path.split('/')
                                 if x and x != '..'])
         file_loader = None
-        for search_path, loader in self.exports.iteritems():
+        for search_path, loader in six.iteritems(self.exports):
             if search_path == path:
                 real_filename, file_loader = loader(None)
                 if file_loader is not None:
@@ -489,7 +491,7 @@ class DispatcherMiddleware(object):
         return app(environ, start_response)
 
 
-class ClosingIterator(object):
+class ClosingIterator(six.Iterator):
     """The WSGI specification requires that all middlewares and gateways
     respect the `close` callback of an iterator.  Because it is useful to add
     another close action to a returned iterator and adding a custom iterator
@@ -527,13 +529,8 @@ class ClosingIterator(object):
     def __iter__(self):
         return self
 
-    if six.PY3:
-        def __next__(self):
-            return self._next()
-    else:
-        def next(self):
-            return self._next()
-
+    def __next__(self):
+        return self._next()
 
     def close(self):
         for callback in self._callbacks:
@@ -559,7 +556,7 @@ def wrap_file(environ, file, buffer_size=8192):
     return environ.get('wsgi.file_wrapper', FileWrapper)(file, buffer_size)
 
 
-class FileWrapper(object):
+class FileWrapper(six.Iterator):
     """This class can be used to convert a :class:`file`-like object into
     an iterable.  It yields `buffer_size` blocks until the file is fully
     read.
@@ -588,7 +585,7 @@ class FileWrapper(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         data = self.file.read(self.buffer_size)
         if data:
             return data
@@ -778,7 +775,7 @@ class LimitedStream(object):
         function.
         """
         if self.silent:
-            return ''
+            return b''
         from werkzeug.exceptions import BadRequest
         raise BadRequest('input stream exhausted')
 
