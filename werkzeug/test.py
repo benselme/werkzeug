@@ -182,7 +182,7 @@ def _iter_data(data):
             for value in values:
                 yield key, value
     else:
-        for key, values in data.iteritems():
+        for key, values in six.iteritems(data):
             if isinstance(values, list):
                 for value in values:
                     yield key, value
@@ -845,7 +845,7 @@ def run_wsgi_app(app, environ, buffered=False):
     # we have a close callable.
     else:
         while not response:
-            buffer.append(app_iter.next())
+            buffer.append(six.next(app_iter))
         if buffer:
             close_func = getattr(app_iter, 'close', None)
             app_iter = chain(buffer, app_iter)

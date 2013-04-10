@@ -512,7 +512,7 @@ class ClosingIterator(object):
 
     def __init__(self, iterable, callbacks=None):
         iterator = iter(iterable)
-        self._next = iterator.next
+        self._next = partial(six.next, iterator)
         if callbacks is None:
             callbacks = []
         elif callable(callbacks):

@@ -1070,8 +1070,8 @@ class BaseResponse(object):
         """
         # XXX: code for backwards compatibility with custom fix_headers
         # methods.
-        if self.fix_headers.func_code is not \
-           BaseResponse.fix_headers.func_code:
+        if self.fix_headers.__code__ is not \
+           BaseResponse.fix_headers.__code__:
             if __debug__:
                 from warnings import warn
                 warn(DeprecationWarning('fix_headers changed behavior in 0.6 '

@@ -14,6 +14,7 @@ from __future__ import with_statement
 import sys
 import unittest
 from io import BytesIO
+import six
 
 from werkzeug.testsuite import WerkzeugTestCase
 
@@ -236,9 +237,9 @@ class TestTestCase(WerkzeugTestCase):
             'SERVER_PROTOCOL':      'HTTP/1.1',
             'QUERY_STRING':         'bar=baz'
         }
-        for key, value in expected.iteritems():
+        for key, value in six.iteritems(expected):
             assert env[key] == value
-        assert env['wsgi.input'].read(0) == ''
+        assert env['wsgi.input'].read(0) == b''
 
         assert create_environ('/foo', 'http://example.com/')['SCRIPT_NAME'] == ''
 
