@@ -13,7 +13,7 @@ import codecs
 import mimetypes
 from itertools import repeat
 import six
-from werkzeug._internal import _proxy_repr, _missing, _empty_stream
+from werkzeug._internal import _proxy_repr, _missing, _empty_stream, force_str
 
 
 _locale_delim_re = re.compile(r'[_-]')
@@ -1161,7 +1161,7 @@ class Headers(object):
         """Returns formatted headers suitable for HTTP transmission."""
         strs = []
         for key, value in self.to_list(charset):
-            strs.append('%s: %s' % (key, value))
+            strs.append('{0}: {1}'.format(key, force_str(value)))
         strs.append('\r\n')
         return '\r\n'.join(strs)
 

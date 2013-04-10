@@ -45,7 +45,7 @@ class MutableMultiDictBaseTestCase(WerkzeugTestCase):
             self.assert_equal(type(ud), type(d))
             self.assert_equal(ud, d)
             self.assert_equal(pickle.loads(
-                s.replace('werkzeug.datastructures', 'werkzeug')), d)
+                s.replace(b'werkzeug.datastructures', b'werkzeug')), d)
             ud['newkey'] = 'bla'
             self.assert_not_equal(ud, d)
 
@@ -462,14 +462,12 @@ class HeadersTestCase(WerkzeugTestCase):
         assert len(headers.getlist('Content-Type')) == 1
 
         # list conversion
-        assert headers.to_list() == [
-            ('Content-Type', 'foo/bar'),
-            ('X-Foo', 'bar')
-        ]
-        assert str(headers) == (
-            "Content-Type: foo/bar\r\n"
-            "X-Foo: bar\r\n"
-            "\r\n")
+        self.assertListEqual(headers.to_list(),
+                            [('Content-Type', b'foo/bar'), ('X-Foo', b'bar')])
+        self.assertEqual(str(headers),
+                         "Content-Type: foo/bar\r\n"
+                         "X-Foo: bar\r\n"
+                         "\r\n")
         assert str(self.storage_class()) == "\r\n"
 
         # extended add
