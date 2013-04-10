@@ -8,6 +8,7 @@
     :copyright: (c) 2011 by the Werkzeug Team, see AUTHORS for more details.
     :license: BSD, see LICENSE for more details.
 """
+import six
 from werkzeug.wsgi import ClosingIterator
 from werkzeug._internal import _patch_wrapper
 
@@ -17,13 +18,17 @@ from werkzeug._internal import _patch_wrapper
 try:
     from greenlet import getcurrent as get_ident
 except ImportError: # pragma: no cover
-    try:
-        from thread import get_ident
-    except ImportError: # pragma: no cover
+    if six.PY3:
         try:
-            from _dummy_thread import get_ident
+            from threading import get_ident
+        except ImportError: # pragma: no cover
+            from dummy_threading import get_ident
+    else:
+        try:
+            from thread import get_ident
         except ImportError: # pragma: no cover
             from dummy_thread import get_ident
+
 
 
 def release_local(local):

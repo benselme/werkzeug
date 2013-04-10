@@ -76,9 +76,9 @@ class LocalTestCase(WerkzeugTestCase):
         assert ls * 1 == 2
         assert 1 * ls == 2
         assert ls / 1 == 2
-        assert 1.0 / ls == 0.5
-        assert ls // 1.0 == 2.0
-        assert 1.0 // ls == 0.0
+        assert 1.0 / float(ls) == 0.5
+        assert float(ls) // 1.0 == 2.0
+        assert 1.0 // float(ls) == 0.0
         assert ls % 2 == 0
         assert 2 % ls == 0
 
