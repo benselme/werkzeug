@@ -39,7 +39,7 @@ def form_data_consumer(request):
 
 
 def get_contents(filename):
-    f = file(filename, 'rb')
+    f = open(filename, 'rb')
     try:
         return f.read()
     finally:
@@ -241,7 +241,7 @@ class MultiPartTestCase(WerkzeugTestCase):
                                    content_type='multipart/form-data; boundary=foo',
                                    method='POST')
         self.assert_equal(data.files['test'].filename, 'test.txt')
-        self.assert_equal(data.files['test'].read(), 'file contents')
+        self.assert_equal(data.files['test'].read(), b'file contents')
 
     def test_extra_newline(self):
         # this test looks innocent but it was actually timeing out in
@@ -335,11 +335,11 @@ class MultiPartTestCase(WerkzeugTestCase):
 
 class InternalFunctionsTestCase(WerkzeugTestCase):
 
-    def test_lien_parser(self):
-        assert formparser._line_parse('foo') == ('foo', False)
-        assert formparser._line_parse('foo\r\n') == ('foo', True)
-        assert formparser._line_parse('foo\r') == ('foo', True)
-        assert formparser._line_parse('foo\n') == ('foo', True)
+    def test_line_parser(self):
+        self.assertEqual(formparser._line_parse(b'foo'), (b'foo', False))
+        self.assertEqual(formparser._line_parse(b'foo\r\n'), (b'foo', True))
+        self.assertEqual(formparser._line_parse(b'foo\r'), (b'foo', True))
+        self.assertEqual(formparser._line_parse(b'foo\n'), (b'foo', True))
 
     def test_find_terminator(self):
         lineiter = iter('\n\n\nfoo\nbar\nbaz'.splitlines(True))

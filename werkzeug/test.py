@@ -503,7 +503,7 @@ class EnvironBuilder(object):
         if self.closed:
             return
         try:
-            files = self.files.itervalues()
+            files = six.itervalues(self.files)
         except AttributeError:
             files = ()
         for f in files:
