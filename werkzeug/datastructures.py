@@ -2265,6 +2265,8 @@ class ContentRange(object):
     def __repr__(self):
         return '<%s %r>' % (self.__class__.__name__, str(self))
 
+if six.PY3:
+    ContentRange.__bool__ = ContentRange.__nonzero__
 
 class Authorization(ImmutableDictMixin, dict):
     """Represents an `Authorization` header sent by the client.  You should

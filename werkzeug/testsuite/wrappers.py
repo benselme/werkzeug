@@ -81,32 +81,32 @@ class WrappersTestCase(WerkzeugTestCase):
         assert response['args_as_list'] == [('foo', ['bar', 'hehe'])]
         assert response['form'] == MultiDict()
         assert response['form_as_list'] == []
-        assert response['data'] == ''
+        assert response['data'] == b''
         self.assert_environ(response['environ'], 'GET')
 
         # post requests with form data
-        response = client.post('/?blub=blah', data='foo=blub+hehe&blah=42',
+        response = client.post('/?blub=blah', data=b'foo=blub+hehe&blah=42',
                                content_type='application/x-www-form-urlencoded')
         assert response['args'] == MultiDict([('blub', 'blah')])
         assert response['args_as_list'] == [('blub', ['blah'])]
         assert response['form'] == MultiDict([('foo', 'blub hehe'), ('blah', '42')])
-        assert response['data'] == ''
+        assert response['data'] == b''
         # currently we do not guarantee that the values are ordered correctly
         # for post data.
         ## assert response['form_as_list'] == [('foo', ['blub hehe']), ('blah', ['42'])]
         self.assert_environ(response['environ'], 'POST')
 
         # patch requests with form data
-        response = client.patch('/?blub=blah', data='foo=blub+hehe&blah=42',
+        response = client.patch('/?blub=blah', data=b'foo=blub+hehe&blah=42',
                                 content_type='application/x-www-form-urlencoded')
         assert response['args'] == MultiDict([('blub', 'blah')])
         assert response['args_as_list'] == [('blub', ['blah'])]
         assert response['form'] == MultiDict([('foo', 'blub hehe'), ('blah', '42')])
-        assert response['data'] == ''
+        assert response['data'] == b''
         self.assert_environ(response['environ'], 'PATCH')
 
         # post requests with json data
-        json = '{"foo": "bar", "blub": "blah"}'
+        json = b'{"foo": "bar", "blub": "blah"}'
         response = client.post('/?a=b', data=json, content_type='application/json')
         assert response['data'] == json
         assert response['args'] == MultiDict([('a', 'b')])
@@ -178,8 +178,8 @@ class WrappersTestCase(WerkzeugTestCase):
 
         # close call forwarding
         closed = []
-        class Iterable(object):
-            def next(self):
+        class Iterable(six.Iterator):
+            def __next__(self):
                 raise StopIteration()
             def __iter__(self):
                 return self
@@ -191,7 +191,7 @@ class WrappersTestCase(WerkzeugTestCase):
                                                  create_environ(),
                                                  buffered=True)
         assert status == '200 OK'
-        assert ''.join(app_iter) == ''
+        assert b''.join(app_iter) == b''
         assert len(closed) == 2
 
     def test_response_status_codes(self):
@@ -440,7 +440,7 @@ class WrappersTestCase(WerkzeugTestCase):
 
     def test_form_parsing_failed(self):
         data = (
-            '--blah\r\n'
+            b'--blah\r\n'
         )
         data = wrappers.Request.from_values(input_stream=BytesIO(data),
                                             content_length=len(data),
@@ -473,11 +473,11 @@ class WrappersTestCase(WerkzeugTestCase):
             yield "bar"
         resp = wrappers.Response(generate())
         resp.freeze()
-        assert resp.response == ['foo', 'bar']
+        assert resp.response == [b'foo', b'bar']
         assert resp.headers['content-length'] == '6'
 
     def test_other_method_payload(self):
-        data = 'Hello World'
+        data = b'Hello World'
         req = wrappers.Request.from_values(input_stream=BytesIO(data),
                                            content_length=len(data),
                                            content_type='text/plain',
@@ -527,7 +527,7 @@ class WrappersTestCase(WerkzeugTestCase):
         assert resp.is_streamed
         assert not resp.is_sequence
         assert resp.data == u'Hello Wörld!'.encode('utf-8')
-        assert resp.response == ['Hello ', u'Wörld!'.encode('utf-8')]
+        assert resp.response == [b'Hello ', u'Wörld!'.encode('utf-8')]
         assert not resp.is_streamed
         assert resp.is_sequence
 
@@ -539,7 +539,7 @@ class WrappersTestCase(WerkzeugTestCase):
         self.assert_raises(RuntimeError, lambda: resp.data)
         resp.make_sequence()
         assert resp.data == u'Hello Wörld!'.encode('utf-8')
-        assert resp.response == ['Hello ', u'Wörld!'.encode('utf-8')]
+        assert resp.response == [b'Hello ', u'Wörld!'.encode('utf-8')]
         assert not resp.is_streamed
         assert resp.is_sequence
 
@@ -640,11 +640,11 @@ class WrappersTestCase(WerkzeugTestCase):
         class MyResponse(wrappers.Response):
             automatically_set_content_length = False
         resp = MyResponse('Hello World!')
-        self.assert_(resp.content_length is None)
+        self.assertTrue(resp.content_length is None)
 
         resp = MyResponse(['Hello World!'])
-        self.assert_(resp.content_length is None)
-        self.assert_('Content-Length' not in resp.get_wsgi_headers({}))
+        self.assertTrue(resp.content_length is None)
+        self.assertNotIn('Content-Length', resp.get_wsgi_headers({}))
 
     def test_location_header_autocorrect(self):
         env = create_environ()

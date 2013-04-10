@@ -12,6 +12,7 @@
     :license: BSD, see LICENSE for more details.
 """
 import re
+import six
 
 
 class UserAgentParser(object):
@@ -176,6 +177,8 @@ class UserAgent(object):
             self.version
         )
 
+if six.PY3:
+    UserAgent.__bool__ = UserAgent.__nonzero__
 
 # conceptionally this belongs in this module but because we want to lazily
 # load the user agent module (which happens in wrappers.py) we have to import

@@ -1338,7 +1338,7 @@ class ETagResponseMixin(object):
     def _set_content_range(self, value):
         if not value:
             del self.headers['content-range']
-        elif isinstance(value, basestring):
+        elif isinstance(value, six.string_types):
             self.headers['Content-Range'] = value
         else:
             self.headers['Content-Range'] = value.to_header()
