@@ -163,17 +163,17 @@ class WrappersTestCase(WerkzeugTestCase):
         response = wrappers.BaseResponse()
         response.set_cookie('foo', 'bar', 60, 0, '/blub', 'example.org', False)
         assert response.headers.to_list() == [
-            ('Content-Type', b'text/plain; charset=utf-8'),
-            ('Set-Cookie', b'foo=bar; Domain=example.org; expires=Thu, '
-             b'01-Jan-1970 00:00:00 GMT; Max-Age=60; Path=/blub')
+            ('Content-Type', 'text/plain; charset=utf-8'),
+            ('Set-Cookie', 'foo=bar; Domain=example.org; expires=Thu, '
+             '01-Jan-1970 00:00:00 GMT; Max-Age=60; Path=/blub')
         ]
 
         # delete cookie
         response = wrappers.BaseResponse()
         response.delete_cookie('foo')
         assert response.headers.to_list() == [
-            ('Content-Type', b'text/plain; charset=utf-8'),
-            ('Set-Cookie', b'foo=; expires=Thu, 01-Jan-1970 00:00:00 GMT; Max-Age=0; Path=/')
+            ('Content-Type', 'text/plain; charset=utf-8'),
+            ('Set-Cookie', 'foo=; expires=Thu, 01-Jan-1970 00:00:00 GMT; Max-Age=0; Path=/')
         ]
 
         # close call forwarding

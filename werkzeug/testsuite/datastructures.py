@@ -463,7 +463,7 @@ class HeadersTestCase(WerkzeugTestCase):
 
         # list conversion
         self.assertListEqual(headers.to_list(),
-                            [('Content-Type', b'foo/bar'), ('X-Foo', b'bar')])
+                            [('Content-Type', 'foo/bar'), ('X-Foo', 'bar')])
         self.assertEqual(str(headers),
                          "Content-Type: foo/bar\r\n"
                          "X-Foo: bar\r\n"

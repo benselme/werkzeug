@@ -1144,12 +1144,13 @@ class Headers(object):
 
     def to_list(self, charset='iso-8859-1'):
         """Convert the headers into a list and converts the unicode header
-        items to the specified charset.
+        items to the specified charset if python < 3
 
         :return: list
         """
         return [
-            (k, isinstance(v, six.text_type) and v.encode(charset) or str(v))
+            (k, not six.PY3 and isinstance(v, unicode) and v.encode(charset) or
+                str(v))
             for k, v in self]
 
     def copy(self):
