@@ -315,7 +315,7 @@ class EnvironBuilder(object):
         if data:
             if input_stream is not None:
                 raise TypeError('can\'t provide input stream and data')
-            if isinstance(data, six.string_types):
+            if isinstance(data, (bytes,) + six.string_types):
                 if isinstance(data, six.text_type):
                     self.input_stream = StringIO(data)
                 else:

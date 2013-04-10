@@ -253,7 +253,8 @@ def parse_multipart_headers(iterable):
             break
         elif line[0] in b' \t' and result:
             key, value = result[-1]
-            result[-1] = (force_str(key), force_str(value + b'\n ' + line[1:]))
+            result[-1] = (force_str(key),
+                          force_str(force_bytes(value) + b'\n ' + line[1:]))
         else:
             parts = line.split(b':', 1)
             if len(parts) == 2:

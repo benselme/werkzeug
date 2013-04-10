@@ -657,7 +657,7 @@ class BaseResponse(object):
         # the charset attribute, the data is set in the correct charset.
         if response is None:
             self.response = []
-        elif isinstance(response, six.string_types):
+        elif isinstance(response, (bytes,) + six.string_types):
             self.data = response
         else:
             self.response = response

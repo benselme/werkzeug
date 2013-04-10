@@ -15,6 +15,7 @@ import unittest
 from io import BytesIO
 from os.path import join, dirname
 import six
+from werkzeug._internal import force_bytes
 
 from werkzeug.testsuite import WerkzeugTestCase
 
@@ -30,10 +31,10 @@ def form_data_consumer(request):
     if result_object == 'text':
         return Response(repr(request.form['text']))
     f = request.files[result_object]
-    return Response('\n'.join((
-        repr(f.filename),
-        repr(f.name),
-        repr(f.content_type),
+    return Response(b'\n'.join((
+        force_bytes(repr(f.filename)),
+        force_bytes(repr(f.name)),
+        force_bytes(repr(f.content_type)),
         f.stream.read()
     )))
 
@@ -135,7 +136,8 @@ class FormParserTestCase(WerkzeugTestCase):
                                   method='POST')
         # make sure we have a real file here, because we expect to be
         # on the disk.  > 1024 * 500
-        self.assert_(hasattr(req.files['foo'].stream, 'fileno'))
+        self.assertTrue(hasattr(req.files['foo'].stream, 'fileno'))
+        req.files['foo'].stream.close()
 
 
 class MultiPartTestCase(WerkzeugTestCase):
@@ -174,15 +176,15 @@ class MultiPartTestCase(WerkzeugTestCase):
                 response = client.post('/?object=' + field, data=data, content_type=
                 'multipart/form-data; boundary="%s"' % boundary,
                                        content_length=len(data))
-                lines = response.data.split('\n', 3)
-                self.assert_equal(lines[0], repr(filename))
-                self.assert_equal(lines[1], repr(field))
-                self.assert_equal(lines[2], repr(content_type))
+                lines = response.data.split(b'\n', 3)
+                self.assert_equal(lines[0], force_bytes(repr(filename)))
+                self.assert_equal(lines[1], force_bytes(repr(field)))
+                self.assert_equal(lines[2], force_bytes(repr(content_type)))
                 self.assert_equal(lines[3], get_contents(join(folder, fsname)))
             response = client.post('/?object=text', data=data, content_type=
             'multipart/form-data; boundary="%s"' % boundary,
                                    content_length=len(data))
-            self.assert_equal(response.data, repr(text))
+            self.assert_equal(response.data, force_bytes(repr(text)))
 
     def test_ie7_unc_path(self):
         client = Client(form_data_consumer, Response)
@@ -191,9 +193,10 @@ class MultiPartTestCase(WerkzeugTestCase):
         boundary = '---------------------------7da36d1b4a0164'
         response = client.post('/?object=cb_file_upload_multiple', data=data, content_type=
         'multipart/form-data; boundary="%s"' % boundary, content_length=len(data))
-        lines = response.data.split('\n', 3)
-        self.assert_equal(lines[0],
-                          repr(u'Sellersburg Town Council Meeting 02-22-2010doc.doc'))
+        lines = response.data.split(b'\n', 3)
+        self.assertEqual(
+            lines[0],
+            force_bytes(repr(u'Sellersburg Town Council Meeting 02-22-2010doc.doc')))
 
     def test_end_of_file(self):
         # This test looks innocent but it was actually timeing out in
@@ -208,22 +211,22 @@ class MultiPartTestCase(WerkzeugTestCase):
                                    content_length=len(data),
                                    content_type='multipart/form-data; boundary=foo',
                                    method='POST')
-        self.assert_(not data.files)
-        self.assert_(not data.form)
+        self.assertTrue(not data.files)
+        self.assertTrue(not data.form)
 
     def test_broken(self):
         data = (
-            '--foo\r\n'
-            'Content-Disposition: form-data; name="test"; filename="test.txt"\r\n'
-            'Content-Transfer-Encoding: base64\r\n'
-            'Content-Type: text/plain\r\n\r\n'
-            'broken base 64'
-            '--foo--'
+            b'--foo\r\n'
+            b'Content-Disposition: form-data; name="test"; filename="test.txt"\r\n'
+            b'Content-Transfer-Encoding: base64\r\n'
+            b'Content-Type: text/plain\r\n\r\n'
+            b'broken base 64'
+            b'--foo--'
         )
         _, form, files = formparser.parse_form_data(create_environ(data=data,
                                                                    method='POST', content_type='multipart/form-data; boundary=foo'))
-        self.assert_(not files)
-        self.assert_(not form)
+        self.assertTrue(not files)
+        self.assertTrue(not form)
 
         self.assert_raises(ValueError, formparser.parse_form_data,
                            create_environ(data=data, method='POST',
@@ -256,7 +259,7 @@ class MultiPartTestCase(WerkzeugTestCase):
                                    content_length=len(data),
                                    content_type='multipart/form-data; boundary=foo',
                                    method='POST')
-        self.assert_(not data.files)
+        self.assertTrue(not data.files)
         self.assert_equal(data.form['foo'], 'a string')
 
     def test_headers(self):
@@ -314,10 +317,10 @@ class MultiPartTestCase(WerkzeugTestCase):
         data = b'--foo\r\nContent-Disposition: form-field; name=foo\r\n\r\nHello World\r\n'
         self.assert_raises(ValueError, parse_multipart, BytesIO(data), 'foo', len(data))
 
-        x = formparser.parse_multipart_headers(['foo: bar\r\n', ' x test\r\n'])
+        x = formparser.parse_multipart_headers([b'foo: bar\r\n', b' x test\r\n'])
         self.assert_equal(x['foo'], 'bar\n x test')
         self.assert_raises(ValueError, formparser.parse_multipart_headers,
-                           ['foo: bar\r\n', ' x test'])
+                           [b'foo: bar\r\n', b' x test'])
 
     def test_bad_newline_bad_newline_assumption(self):
         class ISORequest(Request):
