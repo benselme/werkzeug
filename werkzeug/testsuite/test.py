@@ -15,6 +15,7 @@ import sys
 import unittest
 from io import BytesIO
 import six
+from werkzeug._internal import force_bytes
 
 from werkzeug.testsuite import WerkzeugTestCase
 
@@ -145,7 +146,7 @@ class TestTestCase(WerkzeugTestCase):
         assert req.form['test'] == 'normal value'
         assert req.files['test'].content_type == 'text/plain'
         assert req.files['test'].filename == 'test.txt'
-        assert req.files['test'].read() == 'test contents'
+        assert req.files['test'].read() == b'test contents'
 
     def test_environ_builder_headers(self):
         b = EnvironBuilder(environ_base={'HTTP_USER_AGENT': 'Foo/0.1'},
@@ -203,7 +204,8 @@ class TestTestCase(WerkzeugTestCase):
         assert builder.content_type == 'multipart/form-data'
         req = builder.get_request()
         assert req.form['foo'] == 'bar'
-        assert req.files['blafasel'].read() == 'foo'
+        file_content = req.files['blafasel'].read()
+        assert file_content == b'foo'
 
     def test_environ_builder_stream_switch(self):
         d = MultiDict(dict(foo=u'bar', blub=u'blah', hu=u'hum'))
@@ -368,7 +370,9 @@ class TestTestCase(WerkzeugTestCase):
         resp = client.get('/')
         assert resp.data == b'[]'
         resp = client.get('/')
-        assert resp.data == b"[('test1', u'foo'), ('test2', u'bar')]"
+        expected = force_bytes(str([('test1', u'foo'),
+                                    ('test2', u'bar')]))
+        assert resp.data == expected
 
     def test_correct_open_invocation_on_redirect(self):
         class MyClient(Client):

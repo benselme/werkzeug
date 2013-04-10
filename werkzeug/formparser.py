@@ -15,7 +15,7 @@ from tempfile import TemporaryFile
 from itertools import chain, repeat
 from functools import update_wrapper
 
-from werkzeug._internal import _decode_unicode, _empty_stream
+from werkzeug._internal import _decode_unicode, _empty_stream, force_bytes, force_str
 from werkzeug.urls import url_decode_stream
 from werkzeug.wsgi import LimitedStream, make_line_iter
 from werkzeug.exceptions import RequestEntityTooLarge
@@ -226,9 +226,9 @@ def _line_parse(line):
     """Removes line ending characters and returns a tuple (`stripped_line`,
     `is_terminated`).
     """
-    if line[-2:] == '\r\n':
+    if line[-2:] == b'\r\n':
         return line[:-2], True
-    elif line[-1:] in '\r\n':
+    elif line[-1:] in b'\r\n':
         return line[:-1], True
     return line, False
 
@@ -249,13 +249,14 @@ def parse_multipart_headers(iterable):
             raise ValueError('unexpected end of line in multipart header')
         if not line:
             break
-        elif line[0] in ' \t' and result:
+        elif line[0] in b' \t' and result:
             key, value = result[-1]
-            result[-1] = (key, value + '\n ' + line[1:])
+            result[-1] = (force_str(key), force_str(value + b'\n ' + line[1:]))
         else:
-            parts = line.split(':', 1)
+            parts = line.split(b':', 1)
             if len(parts) == 2:
-                result.append((parts[0].strip(), parts[1].strip()))
+                result.append((force_str(parts[0].strip()),
+                              force_str(parts[1].strip())))
 
     # we link the list to the headers, no need to create a copy, the
     # list was not shared anyways.
@@ -351,8 +352,9 @@ class MultiPartParser(object):
             self.fail('Boundary longer than buffer size')
 
     def parse(self, file, boundary, content_length):
-        next_part = '--' + boundary
-        last_part = next_part + '--'
+        boundary = force_bytes(boundary)
+        next_part = b'--' + boundary
+        last_part = next_part + b'--'
 
         form = []
         files = []
@@ -395,12 +397,12 @@ class MultiPartParser(object):
                     filename, headers, content_length)
                 _write = container.write
 
-            buf = ''
+            buf = b''
             for line in iterator:
                 if not line:
                     self.fail('unexpected end of stream')
 
-                if line[:2] == '--':
+                if line[:2] == b'--':
                     terminator = line.rstrip()
                     if terminator in (next_part, last_part):
                         break
@@ -415,7 +417,7 @@ class MultiPartParser(object):
                 # this is usually a newline delimiter.
                 if buf:
                     _write(buf)
-                    buf = ''
+                    buf = b''
 
                 # If the line ends with windows CRLF we write everything except
                 # the last two bytes.  In all other cases however we write
@@ -426,8 +428,8 @@ class MultiPartParser(object):
                 # truncate the stream.  However we do have to make sure that
                 # if something else than a newline is in there we write it
                 # out.
-                if line[-2:] == '\r\n':
-                    buf = '\r\n'
+                if line[-2:] == b'\r\n':
+                    buf = b'\r\n'
                     cutoff = -2
                 else:
                     buf = line[-1]
@@ -447,7 +449,7 @@ class MultiPartParser(object):
             # if we have a leftover in the buffer that is not a newline
             # character we have to flush it, otherwise we will chop of
             # certain values.
-            if buf not in ('', '\r', '\n', '\r\n'):
+            if buf not in (b'', b'\r', b'\n', b'\r\n'):
                 _write(buf)
 
             if is_file:
@@ -455,7 +457,7 @@ class MultiPartParser(object):
                 files.append((name, FileStorage(container, filename, name,
                                                 headers=headers)))
             else:
-                form.append((name, _decode_unicode(''.join(container),
+                form.append((name, _decode_unicode(b''.join(container),
                                                    part_charset, self.errors)))
 
         return self.cls(form), self.cls(files)

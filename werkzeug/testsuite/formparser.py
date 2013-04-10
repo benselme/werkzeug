@@ -351,10 +351,9 @@ class InternalFunctionsTestCase(WerkzeugTestCase):
         assert find_terminator(['']) == ''
 
 
-if not six.PY3:
-    def suite():
-        suite = unittest.TestSuite()
-        suite.addTest(unittest.makeSuite(FormParserTestCase))
-        suite.addTest(unittest.makeSuite(MultiPartTestCase))
-        suite.addTest(unittest.makeSuite(InternalFunctionsTestCase))
-        return suite
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(FormParserTestCase))
+    suite.addTest(unittest.makeSuite(MultiPartTestCase))
+    suite.addTest(unittest.makeSuite(InternalFunctionsTestCase))
+    return suite
