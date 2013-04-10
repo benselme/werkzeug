@@ -140,7 +140,7 @@ def dump_header(iterable, allow_token=True):
     """
     if isinstance(iterable, dict):
         items = []
-        for key, value in iterable.iteritems():
+        for key, value in six.iteritems(iterable):
             if value is None:
                 items.append(key)
             else:
@@ -245,7 +245,7 @@ def parse_options_header(value):
         return '', {}
 
     parts = _tokenize(';' + value)
-    name = parts.next()[0]
+    name = six.next(parts)[0]
     extra = dict(parts)
     return name, extra
 
@@ -749,7 +749,7 @@ def parse_cookie(header, charset='utf-8', errors='replace',
     # decode to unicode and skip broken items.  Our extended morsel
     # and extended cookie will catch CookieErrors and convert them to
     # `None` items which we have to skip here.
-    for key, value in cookie.iteritems():
+    for key, value in six.iteritems(cookie):
         if value.value is not None:
             result[key] = _decode_unicode(unquote_header_value(value.value),
                                           charset, errors)

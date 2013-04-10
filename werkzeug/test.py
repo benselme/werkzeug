@@ -535,7 +535,7 @@ class EnvironBuilder(object):
             result.update(self.environ_base)
 
         def _path_encode(x):
-            if isinstance(x, unicode):
+            if isinstance(x, six.text_type):
                 x = x.encode(self.charset)
             return _unquote(x)
 
