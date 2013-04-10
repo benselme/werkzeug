@@ -12,6 +12,7 @@ import unittest
 import pickle
 from io import BytesIO
 from datetime import datetime
+import six
 
 from werkzeug.testsuite import WerkzeugTestCase
 
@@ -52,7 +53,7 @@ def request_demo_app(environ, start_response):
 
 def prepare_environ_pickle(environ):
     result = {}
-    for key, value in environ.iteritems():
+    for key, value in six.iteritems(environ):
         try:
             pickle.dumps((key, value))
         except Exception:
@@ -150,28 +151,29 @@ class WrappersTestCase(WerkzeugTestCase):
     def test_base_response(self):
         # unicode
         response = wrappers.BaseResponse(u'öäü')
-        assert response.data == 'öäü'
+        # default response charset is unicode, so:
+        self.assertEqual(response.data, b'\xc3\xb6\xc3\xa4\xc3\xbc')
 
         # writing
         response = wrappers.Response('foo')
         response.stream.write('bar')
-        assert response.data == 'foobar'
+        assert response.data == b'foobar'
 
         # set cookie
         response = wrappers.BaseResponse()
         response.set_cookie('foo', 'bar', 60, 0, '/blub', 'example.org', False)
         assert response.headers.to_list() == [
-            ('Content-Type', 'text/plain; charset=utf-8'),
-            ('Set-Cookie', 'foo=bar; Domain=example.org; expires=Thu, '
-             '01-Jan-1970 00:00:00 GMT; Max-Age=60; Path=/blub')
+            ('Content-Type', b'text/plain; charset=utf-8'),
+            ('Set-Cookie', b'foo=bar; Domain=example.org; expires=Thu, '
+             b'01-Jan-1970 00:00:00 GMT; Max-Age=60; Path=/blub')
         ]
 
         # delete cookie
         response = wrappers.BaseResponse()
         response.delete_cookie('foo')
         assert response.headers.to_list() == [
-            ('Content-Type', 'text/plain; charset=utf-8'),
-            ('Set-Cookie', 'foo=; expires=Thu, 01-Jan-1970 00:00:00 GMT; Max-Age=0; Path=/')
+            ('Content-Type', b'text/plain; charset=utf-8'),
+            ('Set-Cookie', b'foo=; expires=Thu, 01-Jan-1970 00:00:00 GMT; Max-Age=0; Path=/')
         ]
 
         # close call forwarding
@@ -369,7 +371,7 @@ class WrappersTestCase(WerkzeugTestCase):
         response.stream.write('Hello ')
         response.stream.write('World!')
         assert response.response == ['Hello ', 'World!']
-        assert response.data == 'Hello World!'
+        assert response.data == b'Hello World!'
 
     def test_common_response_descriptors_mixin(self):
         response = wrappers.Response()

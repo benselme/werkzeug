@@ -977,8 +977,9 @@ class Headers(object):
         """Extend the headers with a dict or an iterable yielding keys and
         values.
         """
+        # FIXME not covered in testsuite.datastructures
         if isinstance(iterable, dict):
-            for key, value in iterable.iteritems():
+            for key, value in six.iteritems(iterable):
                 if isinstance(value, (tuple, list)):
                     for v in value:
                         self.add(key, v)
