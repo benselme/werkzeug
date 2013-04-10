@@ -11,6 +11,7 @@
 import unittest
 
 from datetime import datetime
+import six
 from warnings import filterwarnings, resetwarnings
 
 from werkzeug.testsuite import WerkzeugTestCase
@@ -75,7 +76,8 @@ class InternalTestCase(WerkzeugTestCase):
         resetwarnings()
 
 
-def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(InternalTestCase))
-    return suite
+if not six.PY3:
+    def suite():
+        suite = unittest.TestSuite()
+        suite.addTest(unittest.makeSuite(InternalTestCase))
+        return suite

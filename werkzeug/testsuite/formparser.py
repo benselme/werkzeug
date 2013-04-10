@@ -14,6 +14,7 @@ from __future__ import with_statement
 import unittest
 from io import BytesIO
 from os.path import join, dirname
+import six
 
 from werkzeug.testsuite import WerkzeugTestCase
 
@@ -350,9 +351,10 @@ class InternalFunctionsTestCase(WerkzeugTestCase):
         assert find_terminator(['']) == ''
 
 
-def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(FormParserTestCase))
-    suite.addTest(unittest.makeSuite(MultiPartTestCase))
-    suite.addTest(unittest.makeSuite(InternalFunctionsTestCase))
-    return suite
+if not six.PY3:
+    def suite():
+        suite = unittest.TestSuite()
+        suite.addTest(unittest.makeSuite(FormParserTestCase))
+        suite.addTest(unittest.makeSuite(MultiPartTestCase))
+        suite.addTest(unittest.makeSuite(InternalFunctionsTestCase))
+        return suite

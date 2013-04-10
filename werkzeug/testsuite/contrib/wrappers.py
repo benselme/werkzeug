@@ -12,6 +12,7 @@
 from __future__ import with_statement
 
 import unittest
+import six
 
 from werkzeug.testsuite import WerkzeugTestCase
 
@@ -91,7 +92,8 @@ class WrappersTestCase(WerkzeugTestCase):
             assert False, 'expected type error on charset setting without ct'
 
 
-def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(WrappersTestCase))
-    return suite
+if not six.PY3:
+    def suite():
+        suite = unittest.TestSuite()
+        suite.addTest(unittest.makeSuite(WrappersTestCase))
+        return suite

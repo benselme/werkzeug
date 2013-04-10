@@ -13,6 +13,7 @@
     :license: BSD, see LICENSE for more details.
 """
 import unittest
+import six
 
 from werkzeug.testsuite import WerkzeugTestCase
 
@@ -80,7 +81,8 @@ class ExceptionsTestCase(WerkzeugTestCase):
         }))
 
 
-def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(ExceptionsTestCase))
-    return suite
+if not six.PY3:
+    def suite():
+        suite = unittest.TestSuite()
+        suite.addTest(unittest.makeSuite(ExceptionsTestCase))
+        return suite

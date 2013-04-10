@@ -9,6 +9,7 @@
     :license: BSD, see LICENSE for more details.
 """
 import unittest
+import six
 import warnings
 from werkzeug.testsuite import WerkzeugTestCase
 
@@ -51,8 +52,8 @@ class CompatTestCase(WerkzeugTestCase):
 
         warnings.resetwarnings()
 
-
-def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(CompatTestCase))
-    return suite
+if not six.PY3:
+    def suite():
+        suite = unittest.TestSuite()
+        suite.addTest(unittest.makeSuite(CompatTestCase))
+        return suite

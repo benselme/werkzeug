@@ -15,6 +15,7 @@ from six.moves import http_client as httplib
 import unittest
 from functools import update_wrapper
 from io import BytesIO
+import six
 
 from werkzeug.testsuite import WerkzeugTestCase
 
@@ -94,7 +95,8 @@ class ServingTestCase(WerkzeugTestCase):
         assert res.read() == 'YES'
 
 
-def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(ServingTestCase))
-    return suite
+if not six.PY3:
+    def suite():
+        suite = unittest.TestSuite()
+        suite.addTest(unittest.makeSuite(ServingTestCase))
+        return suite

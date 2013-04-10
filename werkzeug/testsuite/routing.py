@@ -9,6 +9,7 @@
     :license: BSD, see LICENSE for more details.
 """
 import unittest
+import six
 
 from werkzeug.testsuite import WerkzeugTestCase
 
@@ -639,8 +640,8 @@ class RoutingTestCase(WerkzeugTestCase):
         url = a.build('foobar', {}, force_external=True)
         self.assert_equal(url, 'http://xn--n3h.example.com/foo+bar/')
 
-
-def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(RoutingTestCase))
-    return suite
+if not six.PY3:
+    def suite():
+        suite = unittest.TestSuite()
+        suite.addTest(unittest.makeSuite(RoutingTestCase))
+        return suite

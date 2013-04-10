@@ -659,7 +659,8 @@ class WrappersTestCase(WerkzeugTestCase):
         self.assert_equal(resp.get_wsgi_headers(env)['Location'], 'http://localhost/test')
 
 
-def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(WrappersTestCase))
-    return suite
+if not six.PY3:
+    def suite():
+        suite = unittest.TestSuite()
+        suite.addTest(unittest.makeSuite(WrappersTestCase))
+        return suite

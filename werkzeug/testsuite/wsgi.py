@@ -14,6 +14,7 @@ from __future__ import with_statement
 import unittest
 from os import path
 from io import BytesIO
+import six
 
 from werkzeug.testsuite import WerkzeugTestCase
 
@@ -252,7 +253,8 @@ class WSGIUtilsTestCase(WerkzeugTestCase):
             self.assert_equal(lines, ['1234567890\n', '1234567890\n'])
 
 
-def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(WSGIUtilsTestCase))
-    return suite
+if not six.PY3:
+    def suite():
+        suite = unittest.TestSuite()
+        suite.addTest(unittest.makeSuite(WSGIUtilsTestCase))
+        return suite

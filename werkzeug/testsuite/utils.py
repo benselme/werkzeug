@@ -13,6 +13,7 @@ from __future__ import with_statement
 
 import unittest
 from datetime import datetime
+import six
 
 from werkzeug.testsuite import WerkzeugTestCase
 
@@ -258,7 +259,8 @@ class GeneralUtilityTestCase(WerkzeugTestCase):
         assert foo.__module__ == __name__
 
 
-def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(GeneralUtilityTestCase))
-    return suite
+if not six.PY3:
+    def suite():
+        suite = unittest.TestSuite()
+        suite.addTest(unittest.makeSuite(GeneralUtilityTestCase))
+        return suite

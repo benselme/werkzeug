@@ -157,8 +157,9 @@ class DebugHelpersTestCase(WerkzeugTestCase):
         assert '__delitem__' in x
 
 
-def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(DebugReprTestCase))
-    suite.addTest(unittest.makeSuite(DebugHelpersTestCase))
-    return suite
+if not six.PY3:
+    def suite():
+        suite = unittest.TestSuite()
+        suite.addTest(unittest.makeSuite(DebugReprTestCase))
+        suite.addTest(unittest.makeSuite(DebugHelpersTestCase))
+        return suite

@@ -9,6 +9,7 @@
     :license: BSD, see LICENSE for more details.
 """
 import unittest
+import six
 
 from werkzeug.testsuite import WerkzeugTestCase
 from werkzeug.contrib.iterio import IterIO, greenlet
@@ -64,9 +65,10 @@ class IterITestSuite(WerkzeugTestCase):
         self.assert_raises(StopIteration, iterable.next)
 
 
-def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(IterOTestSuite))
-    if greenlet is not None:
-        suite.addTest(unittest.makeSuite(IterITestSuite))
-    return suite
+if not six.PY3:
+    def suite():
+        suite = unittest.TestSuite()
+        suite.addTest(unittest.makeSuite(IterOTestSuite))
+        if greenlet is not None:
+            suite.addTest(unittest.makeSuite(IterITestSuite))
+        return suite
