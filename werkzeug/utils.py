@@ -310,8 +310,8 @@ def escape(s, quote=False):
         return ''
     elif hasattr(s, '__html__'):
         return s.__html__()
-    elif not isinstance(s, basestring):
-        s = unicode(s)
+    elif not isinstance(s, six.string_types):
+        s = six.text_type(s)
     s = s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
     if quote:
         s = s.replace('"', "&quot;")
@@ -355,7 +355,7 @@ def redirect(location, code=302):
     """
     from werkzeug.wrappers import BaseResponse
     display_location = escape(location)
-    if isinstance(location, unicode):
+    if isinstance(location, six.text_type):
         from werkzeug.urls import iri_to_uri
         location = iri_to_uri(location)
     response = BaseResponse(

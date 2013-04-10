@@ -25,7 +25,8 @@ try:
     from urllib.request import Request as U2Request
 except ImportError:
     from urllib2 import Request as U2Request
-from werkzeug._internal import _empty_stream, _get_environ, force_str
+import email.message as email_message
+from werkzeug._internal import _empty_stream, _get_environ, force_str, force_bytes
 from werkzeug.wrappers import BaseRequest
 from werkzeug.urls import url_encode, url_fix, iri_to_uri, _unquote
 from werkzeug.wsgi import get_host, get_current_url, ClosingIterator
@@ -47,6 +48,7 @@ def stream_encode_multipart(values, use_tempfile=True, threshold=1024 * 500,
 
     if use_tempfile:
         def write(string):
+            string = force_bytes(string, charset)
             stream, total_length, on_disk = _closure
             if on_disk:
                 stream.write(string)
@@ -62,15 +64,15 @@ def stream_encode_multipart(values, use_tempfile=True, threshold=1024 * 500,
                     _closure[2] = True
                 _closure[1] = total_length + length
     else:
-        write = _closure[0].write
+        write = lambda string: _closure[0].write(force_bytes(string, charset))
 
     if not isinstance(values, MultiDict):
         values = MultiDict(values)
 
     for key, values in values.iterlists():
         for value in values:
-            write('--%s\r\nContent-Disposition: form-data; name="%s"' %
-                  (boundary, key))
+            write('--{0}\r\nContent-Disposition: form-data; name="{1}"'.format(
+                  boundary, key))
             reader = getattr(value, 'read', None)
             if reader is not None:
                 filename = getattr(value, 'filename',
@@ -91,8 +93,8 @@ def stream_encode_multipart(values, use_tempfile=True, threshold=1024 * 500,
                         break
                     write(chunk)
             else:
-                if isinstance(value, unicode):
-                    value = value.encode(charset)
+                if isinstance(value, six.string_types):
+                    value = force_str(value, charset)
                 write('\r\n\r\n' + str(value))
             write('\r\n')
     write('--%s--\r\n' % boundary)
@@ -141,7 +143,12 @@ class _TestCookieResponse(object):
     """
 
     def __init__(self, headers):
-        self.headers = _TestCookieHeaders(headers)
+        if six.PY3:
+            self.headers = email_message.Message()
+            for header in headers:
+                self.headers.add_header(header[0], header[1])
+        else:
+            self.headers = _TestCookieHeaders(headers)
 
     def info(self):
         return self.headers
@@ -524,7 +531,7 @@ class EnvironBuilder(object):
                 stream_encode_multipart(values, charset=self.charset)
             content_type += '; boundary="%s"' % boundary
         elif content_type == 'application/x-www-form-urlencoded':
-            values = url_encode(self.form, charset=self.charset)
+            values = url_encode(self.form, charset=self.charset, as_bytes=True)
             content_length = len(values)
             input_stream = BytesIO(values)
         else:

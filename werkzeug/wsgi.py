@@ -527,8 +527,13 @@ class ClosingIterator(object):
     def __iter__(self):
         return self
 
-    def next(self):
-        return self._next()
+    if six.PY3:
+        def __next__(self):
+            return self._next()
+    else:
+        def next(self):
+            return self._next()
+
 
     def close(self):
         for callback in self._callbacks:
@@ -641,20 +646,20 @@ def make_line_iter(stream, limit=None, buffer_size=10 * 1024):
             new_buf = []
             for item in chain(buffer, new_data.splitlines(True)):
                 new_buf.append(item)
-                if item and item[-1:] in '\r\n':
-                    yield ''.join(new_buf)
+                if item and item[-1:] in b'\r\n':
+                    yield b''.join(new_buf)
                     new_buf = []
             buffer = new_buf
         if buffer:
-            yield ''.join(buffer)
+            yield b''.join(buffer)
 
     # This hackery is necessary to merge 'foo\r' and '\n' into one item
     # of 'foo\r\n' if we were unlucky and we hit a chunk boundary.
-    previous = ''
+    previous = b''
     for item in _iter_basic_lines():
-        if item == '\n' and previous[-1:] == '\r':
-            previous += '\n'
-            item = ''
+        if item == b'\n' and previous[-1:] == b'\r':
+            previous += b'\n'
+            item = b''
         if previous:
             yield previous
         previous = item

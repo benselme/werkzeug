@@ -350,6 +350,8 @@ def url_encode(obj, charset='utf-8', encode_keys=False, sort=False, key=None,
     :param key: an optional function to be used for sorting.  For more details
                 check out the :func:`sorted` documentation.
     """
+    if as_bytes:
+        separator = force_bytes(separator)
     return separator.join(_url_encode_impl(obj, charset, encode_keys, sort,
                                            key, as_bytes))
 
