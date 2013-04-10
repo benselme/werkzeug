@@ -769,11 +769,11 @@ class BaseResponse(object):
         :attr:`implicit_sequence_conversion` to `False`.
         """
         self._ensure_sequence()
-        return ''.join(self.iter_encoded())
+        return b''.join(self.iter_encoded())
     def _set_data(self, value):
         # if an unicode string is set, it's encoded directly so that we
         # can set the content length
-        if isinstance(value, unicode):
+        if isinstance(value, six.text_type):
             value = value.encode(self.charset)
         self.response = [value]
         if self.automatically_set_content_length:
@@ -836,10 +836,13 @@ class BaseResponse(object):
         if __debug__:
             _warn_if_string(self.response)
         for item in self.response:
-            if isinstance(item, unicode):
+            if isinstance(item, six.text_type):
                 yield item.encode(charset)
             else:
-                yield str(item)
+                if not isinstance(item, bytes):
+                    yield str(item)
+                else:
+                    yield item
 
     def set_cookie(self, key, value='', max_age=None, expires=None,
                    path='/', domain=None, secure=None, httponly=False):
@@ -984,7 +987,7 @@ class BaseResponse(object):
         # make sure the location header is an absolute URL
         if location is not None:
             old_location = location
-            if isinstance(location, unicode):
+            if isinstance(location, six.text_type):
                 location = iri_to_uri(location)
             if self.autocorrect_location_header:
                 location = urlparse.urljoin(
@@ -996,7 +999,7 @@ class BaseResponse(object):
 
         # make sure the content location is a URL
         if content_location is not None and \
-           isinstance(content_location, unicode):
+           isinstance(content_location, six.text_type):
             headers['Content-Location'] = iri_to_uri(content_location)
 
         # remove entity headers and set content length to zero if needed.
