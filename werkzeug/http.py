@@ -16,6 +16,7 @@
     :copyright: (c) 2011 by the Werkzeug Team, see AUTHORS for more details.
     :license: BSD, see LICENSE for more details.
 """
+import base64
 import re
 from time import time
 import six
@@ -38,7 +39,7 @@ except ImportError: # pragma: no cover
 #: HTTP_STATUS_CODES is "exported" from this module.
 #: XXX: move to werkzeug.consts or something
 from werkzeug._internal import HTTP_STATUS_CODES, _dump_date, \
-     _ExtendedCookie, _ExtendedMorsel, _decode_unicode
+     _ExtendedCookie, _ExtendedMorsel, _decode_unicode, force_bytes, force_str
 
 
 _accept_re = re.compile(r'([^\s;,]+)(?:[^,]*?;\s*q=(\d*(?:\.\d+)?))?')
@@ -355,11 +356,11 @@ def parse_authorization_header(value):
         return
     if auth_type == 'basic':
         try:
-            username, password = auth_info.decode('base64').split(':', 1)
+            username, password =  base64.b64decode(auth_info).split(b':', 1)
         except Exception as e:
             return
-        return Authorization('basic', {'username': username,
-                                       'password': password})
+        return Authorization('basic', {'username': force_str(username),
+                                       'password': force_str(password)})
     elif auth_type == 'digest':
         auth_map = parse_dict_header(auth_info)
         for key in 'username', 'realm', 'nonce', 'uri', 'response':
@@ -563,7 +564,8 @@ def parse_etags(value):
 
 def generate_etag(data):
     """Generate an etag for some data."""
-    return md5(data).hexdigest()
+    # PY3CHK
+    return md5(force_bytes(data)).hexdigest()
 
 
 def parse_date(value):
@@ -646,7 +648,7 @@ def is_resource_modified(environ, etag=None, data=None, last_modified=None):
         return False
 
     unmodified = False
-    if isinstance(last_modified, basestring):
+    if isinstance(last_modified, six.string_types):
         last_modified = parse_date(last_modified)
 
     # ensure that microsecond is zero because the HTTP spec does not transmit
@@ -788,14 +790,13 @@ def dump_cookie(key, value='', max_age=None, expires=None, path='/',
         key = str(key)
     except UnicodeError:
         raise TypeError('invalid key %r' % key)
-    if isinstance(value, unicode):
-        value = value.encode(charset)
+    value = force_str(value)
     value = quote_header_value(value)
     morsel = _ExtendedMorsel(key, value)
     if isinstance(max_age, timedelta):
         max_age = (max_age.days * 60 * 60 * 24) + max_age.seconds
     if expires is not None:
-        if not isinstance(expires, basestring):
+        if not isinstance(expires, six.string_types):
             expires = cookie_date(expires)
         morsel['expires'] = expires
     elif max_age is not None and sync_expires:

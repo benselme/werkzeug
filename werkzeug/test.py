@@ -25,7 +25,7 @@ try:
     from urllib.request import Request as U2Request
 except ImportError:
     from urllib2 import Request as U2Request
-from werkzeug._internal import _empty_stream, _get_environ
+from werkzeug._internal import _empty_stream, _get_environ, force_str
 from werkzeug.wrappers import BaseRequest
 from werkzeug.urls import url_encode, url_fix, iri_to_uri, _unquote
 from werkzeug.wsgi import get_host, get_current_url, ClosingIterator
@@ -535,8 +535,7 @@ class EnvironBuilder(object):
             result.update(self.environ_base)
 
         def _path_encode(x):
-            if isinstance(x, six.text_type):
-                x = x.encode(self.charset)
+            x = force_str(x, self.charset)
             return _unquote(x)
 
         result.update({
