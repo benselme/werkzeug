@@ -105,9 +105,9 @@ class URLsTestCase(WerkzeugTestCase):
         assert urls.uri_to_iri('http://xn--n3h.net/') == u'http://\u2603.net/'
         assert urls.uri_to_iri('http://%C3%BCser:p%C3%A4ssword@xn--n3h.net/p%C3%A5th') == \
             u'http://\xfcser:p\xe4ssword@\u2603.net/p\xe5th'
-        assert urls.iri_to_uri(u'http://☃.net/') == b'http://xn--n3h.net/'
+        assert urls.iri_to_uri(u'http://☃.net/') == 'http://xn--n3h.net/'
         assert urls.iri_to_uri(u'http://üser:pässword@☃.net/påth') == \
-            b'http://%C3%BCser:p%C3%A4ssword@xn--n3h.net/p%C3%A5th'
+            'http://%C3%BCser:p%C3%A4ssword@xn--n3h.net/p%C3%A5th'
 
         self.assertEqual(
             urls.uri_to_iri('http://test.com/%3Fmeh?foo=%26%2F'),
@@ -116,7 +116,7 @@ class URLsTestCase(WerkzeugTestCase):
         # this should work as well, might break on 2.4 because of a broken
         # idna codec
         assert urls.uri_to_iri('/foo') == u'/foo'
-        assert urls.iri_to_uri(u'/foo') == b'/foo'
+        assert urls.iri_to_uri(u'/foo') == '/foo'
 
     def test_ordered_multidict_encoding(self):
         d = OrderedMultiDict()
@@ -167,8 +167,8 @@ class URLsTestCase(WerkzeugTestCase):
 
     def test_quoting_of_local_urls(self):
         rv = urls.iri_to_uri(u'/foo\x8f')
-        assert rv == b'/foo%C2%8F'
-        assert type(rv) is bytes
+        assert rv == '/foo%C2%8F'
+        assert type(rv) is str
 
 
 def suite():

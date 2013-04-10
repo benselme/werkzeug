@@ -170,7 +170,8 @@ def iri_to_uri(iri, charset='utf-8'):
     uri = urlparse.urlunsplit([scheme, hostname, path, query, fragment])
     # this absolutely always must return a string.  Otherwise some parts of
     # the system might perform double quoting (#61)
-    return uri if six.PY3 else str(uri)
+    return force_str(uri)
+    #return uri if six.PY3 else str(uri)
 
 
 def uri_to_iri(uri, charset='utf-8', errors='replace'):
