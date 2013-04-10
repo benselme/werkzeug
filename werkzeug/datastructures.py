@@ -127,7 +127,7 @@ class ImmutableDictMixin(object):
         return type(self), (dict(self),)
 
     def _iter_hashitems(self):
-        return self.iteritems()
+        return six.iteritems(self)
 
     def __hash__(self):
         if self._hash_cache is not None:
@@ -318,7 +318,7 @@ class MultiDict(TypeConversionDict):
             dict.__init__(self, ((k, l[:]) for k, l in mapping.iterlists()))
         elif isinstance(mapping, dict):
             tmp = {}
-            for key, value in mapping.iteritems():
+            for key, value in six.iteritems(mapping):
                 if isinstance(value, (tuple, list)):
                     value = list(value)
                 else:
@@ -339,7 +339,7 @@ class MultiDict(TypeConversionDict):
         dict.update(self, value)
 
     def __iter__(self):
-        return self.iterkeys()
+        return six.iterkeys(self)
 
     def __getitem__(self, key):
         """Return the first data value for this key;
@@ -477,7 +477,7 @@ class MultiDict(TypeConversionDict):
 
         :return: a :class:`list`.
         """
-        return [self[key] for key in self.iterkeys()]
+        return [self[key] for key in six.iterkeys(self)]
 
     def listvalues(self):
         """Return a list of all values associated with a key.  Zipping
@@ -493,7 +493,8 @@ class MultiDict(TypeConversionDict):
 
     def iteritems(self, multi=False):
         """Like :meth:`items` but returns an iterator."""
-        for key, values in dict.iteritems(self):
+        items = dict.items(self) if six.PY3 else dict.iteritems(self)
+        for key, values in items:
             if multi:
                 for value in values:
                     yield key, value
@@ -502,17 +503,20 @@ class MultiDict(TypeConversionDict):
 
     def iterlists(self):
         """Like :meth:`items` but returns an iterator."""
-        for key, values in dict.iteritems(self):
+        items = dict.items(self) if six.PY3 else dict.iteritems(self)
+        for key, values in items:
             yield key, list(values)
 
     def itervalues(self):
         """Like :meth:`values` but returns an iterator."""
-        for values in dict.itervalues(self):
+        values = dict.values(self) if six.PY3 else dict.itervalues(self)
+        for values in values:
             yield values[0]
 
     def iterlistvalues(self):
         """Like :meth:`listvalues` but returns an iterator."""
-        return dict.itervalues(self)
+        values = dict.values(self) if six.PY3 else dict.itervalues(self)
+        return values
 
     def copy(self):
         """Return a shallow copy of this object."""
@@ -651,13 +655,13 @@ class OrderedMultiDict(MultiDict):
             iter2 = other.iteritems(multi=True)
             try:
                 for k1, v1 in iter1:
-                    k2, v2 = iter2.next()
+                    k2, v2 = six.next(iter2)
                     if k1 != k2 or v1 != v2:
                         return False
             except StopIteration:
                 return False
             try:
-                iter2.next()
+                six.next(iter2)
             except StopIteration:
                 return True
             return False
@@ -859,7 +863,7 @@ class Headers(object):
 
     def __getitem__(self, key, _get_mode=False):
         if not _get_mode:
-            if isinstance(key, (int, long)):
+            if isinstance(key, six.integer_types):
                 return self._list[key]
             elif isinstance(key, slice):
                 return self.__class__(self._list[key])
@@ -985,7 +989,7 @@ class Headers(object):
                 self.add(key, value)
 
     def __delitem__(self, key, _index_operation=True):
-        if _index_operation and isinstance(key, (int, long, slice)):
+        if _index_operation and isinstance(key, (slice,) + six.integer_types):
             del self._list[key]
             return
         key = key.lower()
@@ -1013,7 +1017,7 @@ class Headers(object):
         """
         if key is None:
             return self._list.pop()
-        if isinstance(key, (int, long)):
+        if isinstance(key, six.integer_types):
             return self._list.pop(key)
         try:
             rv = self[key]
@@ -1143,8 +1147,9 @@ class Headers(object):
 
         :return: list
         """
-        return [(k, isinstance(v, unicode) and v.encode(charset) or str(v))
-                for k, v in self]
+        return [
+            (k, isinstance(v, six.text_type) and v.encode(charset) or str(v))
+            for k, v in self]
 
     def copy(self):
         return self.__class__(self._list)
@@ -1240,7 +1245,7 @@ class EnvironHeaders(ImmutableHeadersMixin, Headers):
         return len(list(iter(self)))
 
     def __iter__(self):
-        for key, value in self.environ.iteritems():
+        for key, value in six.iteritems(self.environ):
             if key.startswith('HTTP_') and key not in \
                ('HTTP_CONTENT_TYPE', 'HTTP_CONTENT_LENGTH'):
                 yield key[5:].replace('_', '-').title(), value
@@ -1339,7 +1344,7 @@ class CombinedMultiDict(ImmutableMultiDictMixin, MultiDict):
         for d in self.dicts:
             for key, values in d.iterlists():
                 rv.setdefault(key, []).extend(values)
-        return rv.iteritems()
+        return six.iteritems(rv)
 
     def lists(self):
         return list(self.iterlists())

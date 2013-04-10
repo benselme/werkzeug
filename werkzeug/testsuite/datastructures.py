@@ -22,6 +22,8 @@ from __future__ import with_statement
 import unittest
 import pickle
 from copy import copy
+import six
+from six.moves import xrange
 from werkzeug.testsuite import WerkzeugTestCase
 
 from werkzeug import datastructures
@@ -99,7 +101,8 @@ class MutableMultiDictBaseTestCase(WerkzeugTestCase):
 
         # keys, values, items, lists
         assert list(sorted(md.keys())) == ['a', 'b', 'c']
-        assert list(sorted(md.iterkeys())) == ['a', 'b', 'c']
+        if not six.PY3:
+            assert list(sorted(md.iterkeys())) == ['a', 'b', 'c']
 
         assert list(sorted(md.values())) == [1, 2, 3]
         assert list(sorted(md.itervalues())) == [1, 2, 3]
@@ -213,8 +216,8 @@ class ImmutableDictBaseTestCase(WerkzeugTestCase):
         self.assert_equal(d['bar'], 2)
         self.assert_equal(d['baz'], 3)
         self.assert_equal(sorted(d.keys()), ['bar', 'baz', 'foo'])
-        self.assert_('foo' in d)
-        self.assert_('foox' not in d)
+        self.assertIn('foo', d)
+        self.assertNotIn('foox', d)
         self.assert_equal(len(d), 3)
 
     def test_copies_are_mutable(self):
@@ -225,26 +228,26 @@ class ImmutableDictBaseTestCase(WerkzeugTestCase):
 
         mutable = immutable.copy()
         mutable.pop('a')
-        self.assert_('a' in immutable)
-        self.assert_(mutable is not immutable)
-        self.assert_(copy(immutable) is immutable)
+        self.assertIn('a', immutable)
+        self.assertTrue(mutable is not immutable)
+        self.assertTrue(copy(immutable) is immutable)
 
     def test_dict_is_hashable(self):
         cls = self.storage_class
         immutable = cls({'a': 1, 'b': 2})
         immutable2 = cls({'a': 2, 'b': 2})
         x = set([immutable])
-        self.assert_(immutable in x)
-        self.assert_(immutable2 not in x)
+        self.assertIn(immutable, x)
+        self.assertNotIn(immutable2, x)
         x.discard(immutable)
-        self.assert_(immutable not in x)
-        self.assert_(immutable2 not in x)
+        self.assertNotIn(immutable, x)
+        self.assertNotIn(immutable2, x)
         x.add(immutable2)
-        self.assert_(immutable not in x)
-        self.assert_(immutable2 in x)
+        self.assertNotIn(immutable, x)
+        self.assertIn(immutable2, x)
         x.add(immutable)
-        self.assert_(immutable in x)
-        self.assert_(immutable2 in x)
+        self.assertIn(immutable, x)
+        self.assertIn(immutable2, x)
 
 
 class ImmutableTypeConversionDictTestCase(ImmutableDictBaseTestCase):
@@ -259,17 +262,17 @@ class ImmutableMultiDictTestCase(ImmutableDictBaseTestCase):
         immutable = cls({'a': [1, 2], 'b': 2})
         immutable2 = cls({'a': [1], 'b': 2})
         x = set([immutable])
-        self.assert_(immutable in x)
-        self.assert_(immutable2 not in x)
+        self.assertIn(immutable, x)
+        self.assertNotIn(immutable2, x)
         x.discard(immutable)
-        self.assert_(immutable not in x)
-        self.assert_(immutable2 not in x)
+        self.assertNotIn(immutable, x)
+        self.assertNotIn(immutable2, x)
         x.add(immutable2)
-        self.assert_(immutable not in x)
-        self.assert_(immutable2 in x)
+        self.assertNotIn(immutable, x)
+        self.assertIn(immutable2, x)
         x.add(immutable)
-        self.assert_(immutable in x)
-        self.assert_(immutable2 in x)
+        self.assertIn(immutable, x)
+        self.assertIn(immutable2, x)
 
 
 class ImmutableDictTestCase(ImmutableDictBaseTestCase):
@@ -315,7 +318,7 @@ class MultiDictTestCase(MutableMultiDictBaseTestCase):
         md = self.storage_class(mapping)
         assert list(zip(md.keys(), md.listvalues())) == list(md.lists())
         assert list(zip(md, md.iterlistvalues())) == list(md.iterlists())
-        assert list(zip(md.iterkeys(), md.iterlistvalues())) == list(md.iterlists())
+        assert list(zip(six.iterkeys(md), md.iterlistvalues())) == list(md.iterlists())
 
 
 class OrderedMultiDictTestCase(MutableMultiDictBaseTestCase):

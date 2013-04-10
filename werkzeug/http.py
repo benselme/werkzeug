@@ -18,6 +18,8 @@
 """
 import re
 from time import time
+import six
+
 try:
     from email.utils import parsedate_tz
 except ImportError: # pragma: no cover
@@ -113,7 +115,7 @@ def dump_options_header(header, options):
     segments = []
     if header is not None:
         segments.append(header)
-    for key, value in options.iteritems():
+    for key, value in six.iteritems(options):
         if value is None:
             segments.append(key)
         else:
