@@ -22,6 +22,7 @@ import os
 import errno
 import time
 import random
+import six
 
 
 can_rename_open_file = False
@@ -37,10 +38,10 @@ if os.name == 'nt': # pragma: no cover
         _MoveFileEx = ctypes.windll.kernel32.MoveFileExW
 
         def _rename(src, dst):
-            if not isinstance(src, unicode):
-                src = unicode(src, sys.getfilesystemencoding())
-            if not isinstance(dst, unicode):
-                dst = unicode(dst, sys.getfilesystemencoding())
+            if not isinstance(src, six.text_type):
+                src = six.text_type(src, sys.getfilesystemencoding())
+            if not isinstance(dst, six.text_type):
+                dst = six.text_type(dst, sys.getfilesystemencoding())
             if _rename_atomic(src, dst):
                 return True
             retry = 0

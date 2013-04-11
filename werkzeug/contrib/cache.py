@@ -58,7 +58,10 @@
 """
 import os
 import re
+import six
 import tempfile
+from werkzeug._internal import force_bytes
+
 try:
     from hashlib import md5
 except ImportError:
@@ -85,8 +88,12 @@ def _items(mappingorseq):
         ...    assert k*k == v
 
     """
-    return mappingorseq.iteritems() if hasattr(mappingorseq, 'iteritems') \
-        else mappingorseq
+    if hasattr(mappingorseq, 'iteritems'):
+        return mappingorseq.iteritems()
+    elif six.PY3 and hasattr(mappingorseq, 'items'):
+        return mappingorseq.items()
+    else:
+        return mappingorseq
 
 
 class BaseCache(object):
@@ -632,7 +639,7 @@ class FileSystemCache(BaseCache):
                 pass
 
     def _get_filename(self, key):
-        hash = md5(key).hexdigest()
+        hash = md5(force_bytes(key)).hexdigest()
         return os.path.join(self._path, hash)
 
     def get(self, key):

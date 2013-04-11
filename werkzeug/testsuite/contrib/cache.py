@@ -12,6 +12,7 @@ import os
 import time
 import unittest
 import six
+from six.moves import xrange
 import tempfile
 import shutil
 
@@ -163,11 +164,10 @@ class RedisCacheTestCase(WerkzeugTestCase):
         assert c.get('bar') == False
 
 
-if not six.PY3:
-    def suite():
-        suite = unittest.TestSuite()
-        suite.addTest(unittest.makeSuite(SimpleCacheTestCase))
-        suite.addTest(unittest.makeSuite(FileSystemCacheTestCase))
-        if redis is not None:
-            suite.addTest(unittest.makeSuite(RedisCacheTestCase))
-        return suite
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(SimpleCacheTestCase))
+    suite.addTest(unittest.makeSuite(FileSystemCacheTestCase))
+    if redis is not None:
+        suite.addTest(unittest.makeSuite(RedisCacheTestCase))
+    return suite
