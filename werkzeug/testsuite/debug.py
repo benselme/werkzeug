@@ -26,8 +26,8 @@ class DebugReprTestCase(WerkzeugTestCase):
         assert debug_repr([]) == u'[]'
         assert debug_repr([1, 2]) == \
             u'[<span class="number">1</span>, <span class="number">2</span>]'
-        assert debug_repr([1, 'test']) == \
-            u'[<span class="number">1</span>, <span class="string">\'test\'</span>]'
+        self.assertEqual(debug_repr([1, 'test']),
+            u'[<span class="number">1</span>, <span class="string">\'test\'</span>]')
         assert debug_repr([None]) == \
             u'[<span class="object">None</span>]'
 
@@ -54,9 +54,14 @@ class DebugReprTestCase(WerkzeugTestCase):
             u'</span></span></span>}'
         assert debug_repr(dict(zip(range(10), [None] * 10))) == \
             u'{<span class="pair"><span class="key"><span class="number">0</span></span>: <span class="value"><span class="object">None</span></span></span>, <span class="pair"><span class="key"><span class="number">1</span></span>: <span class="value"><span class="object">None</span></span></span>, <span class="pair"><span class="key"><span class="number">2</span></span>: <span class="value"><span class="object">None</span></span></span>, <span class="pair"><span class="key"><span class="number">3</span></span>: <span class="value"><span class="object">None</span></span></span>, <span class="extended"><span class="pair"><span class="key"><span class="number">4</span></span>: <span class="value"><span class="object">None</span></span></span>, <span class="pair"><span class="key"><span class="number">5</span></span>: <span class="value"><span class="object">None</span></span></span>, <span class="pair"><span class="key"><span class="number">6</span></span>: <span class="value"><span class="object">None</span></span></span>, <span class="pair"><span class="key"><span class="number">7</span></span>: <span class="value"><span class="object">None</span></span></span>, <span class="pair"><span class="key"><span class="number">8</span></span>: <span class="value"><span class="object">None</span></span></span>, <span class="pair"><span class="key"><span class="number">9</span></span>: <span class="value"><span class="object">None</span></span></span></span>}'
-        assert debug_repr((1, 'zwei', u'drei')) ==\
-            u'(<span class="number">1</span>, <span class="string">\'' \
-            u'zwei\'</span>, <span class="string">u\'drei\'</span>)'
+        if six.PY3:
+            self.assertEqual(debug_repr((1, 'zwei', b'drei')),
+                             u'(<span class="number">1</span>, <span class="string">\''
+                             'zwei\'</span>, <span class="string">b\'drei\'</span>)')
+        else:
+            self.assertEqual(debug_repr((1, 'zwei', u'drei')),
+                u'(<span class="number">1</span>, <span class="string">\''
+                u'zwei\'</span>, <span class="string">u\'drei\'</span>)')
 
     def test_custom_repr(self):
         class Foo(object):
@@ -72,10 +77,14 @@ class DebugReprTestCase(WerkzeugTestCase):
             u'<span class="number">1</span>, <span class="number">2</span>])'
 
     def test_regex_repr(self):
-        assert debug_repr(re.compile(r'foo\d')) == \
-            u're.compile(<span class="string regex">r\'foo\\d\'</span>)'
-        assert debug_repr(re.compile(six.u(r'foo\d'))) == \
-            u're.compile(<span class="string regex">ur\'foo\\d\'</span>)'
+        self.assertEqual(debug_repr(re.compile(r'foo\d')),
+            u're.compile(<span class="string regex">r\'foo\\d\'</span>)')
+        if six.PY3:
+            self.assertEqual(debug_repr(re.compile(six.b(r'foo\d'))),
+                             u're.compile(<span class="string regex">br\'foo\\d\'</span>)')
+        else:
+            self.assertEqual(debug_repr(re.compile(six.u(r'foo\d'))),
+                u're.compile(<span class="string regex">ur\'foo\\d\'</span>)')
 
     def test_set_repr(self):
         assert debug_repr(frozenset('x')) == \
@@ -109,7 +118,12 @@ class DebugHelpersTestCase(WerkzeugTestCase):
 
         drg = DebugReprGenerator()
         out = drg.dump_object(Foo())
-        assert re.search('Details for werkzeug.testsuite.debug.Foo object at', out)
+        if six.PY3:
+            self.assertTrue(
+                re.search('werkzeug.testsuite.debug.DebugHelpersTestCase.'
+                          'test_object_dumping.&lt;locals&gt;.Foo', out))
+        else:
+            assert re.search('Details for werkzeug.testsuite.debug.Foo object at', out)
         assert re.search('<th>x.*<span class="number">42</span>(?s)', out)
         assert re.search('<th>y.*<span class="number">23</span>(?s)', out)
         assert re.search('<th>z.*<span class="number">15</span>(?s)', out)
@@ -157,9 +171,8 @@ class DebugHelpersTestCase(WerkzeugTestCase):
         assert '__delitem__' in x
 
 
-if not six.PY3:
-    def suite():
-        suite = unittest.TestSuite()
-        suite.addTest(unittest.makeSuite(DebugReprTestCase))
-        suite.addTest(unittest.makeSuite(DebugHelpersTestCase))
-        return suite
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(DebugReprTestCase))
+    suite.addTest(unittest.makeSuite(DebugHelpersTestCase))
+    return suite

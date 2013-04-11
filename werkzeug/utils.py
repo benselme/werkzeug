@@ -15,7 +15,7 @@ import re
 import os
 import six
 from werkzeug._internal import _iter_modules, _DictAccessorProperty, \
-     _parse_signature, _missing
+     _parse_signature, _missing, force_str
 
 
 _format_re = re.compile(r'\$(?:(%s)|\{(%s)\})' % (('[a-zA-Z_][a-zA-Z0-9_]*',) * 2))
@@ -311,7 +311,11 @@ def escape(s, quote=False):
     elif hasattr(s, '__html__'):
         return s.__html__()
     elif not isinstance(s, six.string_types):
-        s = six.text_type(s)
+        if isinstance(s, bytes):
+            s = force_str(s)
+        else:
+            s = six.text_type(s)
+
     s = s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
     if quote:
         s = s.replace('"', "&quot;")

@@ -16,6 +16,9 @@
 import sys
 import re
 from traceback import format_exception_only
+import six
+from werkzeug._internal import force_str, force_text
+
 try:
     from collections import deque
 except ImportError: # pragma: no cover
@@ -74,7 +77,7 @@ class _Helper(object):
             return
         import pydoc
         pydoc.help(topic)
-        rv = sys.stdout.reset().decode('utf-8', 'ignore')
+        rv = force_str(sys.stdout.reset(), 'utf-8', 'ignore')
         paragraphs = _paragraph_re.split(rv)
         if len(paragraphs) > 1:
             title = paragraphs[0]
@@ -135,9 +138,15 @@ class DebugReprGenerator(object):
     del _sequence_repr_maker
 
     def regex_repr(self, obj):
-        pattern = repr(obj.pattern).decode('string-escape', 'ignore')
+        if six.PY3:
+            pattern = repr(obj.pattern).encode('utf-8')\
+                .decode('unicode-escape')
+        else:
+            pattern = repr(obj.pattern).decode('string-escape', 'ignore')
         if pattern[:1] == 'u':
             pattern = 'ur' + pattern[1:]
+        elif pattern[:1] == 'b':
+            pattern = 'br' + pattern[1:]
         else:
             pattern = 'r' + pattern
         return u're.compile(<span class="string regex">%s</span>)' % pattern
@@ -147,7 +156,10 @@ class DebugReprGenerator(object):
         escaped = escape(obj)
         a = repr(escaped[:limit])
         b = repr(escaped[limit:])
-        if isinstance(obj, unicode):
+        if six.PY3:
+            if isinstance(obj, bytes):
+                buf.append('b')
+        elif isinstance(obj, six.text_type):
             buf.append('u')
             a = a[1:]
             b = b[1:]
@@ -156,14 +168,15 @@ class DebugReprGenerator(object):
         else:
             buf.append(a)
         buf.append('</span>')
-        return _add_subclass_info(u''.join(buf), obj, (str, unicode))
+        return _add_subclass_info(u''.join(buf), obj,
+                                  (six.binary_type, six.text_type))
 
     def dict_repr(self, d, recursive, limit=5):
         if recursive:
             return _add_subclass_info(u'{...}', d, dict)
         buf = ['{']
         have_extended_section = False
-        for idx, (key, value) in enumerate(d.iteritems()):
+        for idx, (key, value) in enumerate(six.iteritems(d)):
             if idx:
                 buf.append(', ')
             if idx == limit - 1:
@@ -179,14 +192,14 @@ class DebugReprGenerator(object):
 
     def object_repr(self, obj):
         return u'<span class="object">%s</span>' % \
-               escape(repr(obj).decode('utf-8', 'replace'))
+               escape(force_text(repr(obj), 'utf-8', 'replace'))
 
     def dispatch_repr(self, obj, recursive):
         if obj is helper:
             return u'<span class="help">%r</span>' % helper
-        if isinstance(obj, (int, long, float, complex)):
+        if isinstance(obj, six.integer_types + (float, complex)):
             return u'<span class="number">%r</span>' % obj
-        if isinstance(obj, basestring):
+        if isinstance(obj, (six.binary_type, six.text_type)):
             return self.string_repr(obj)
         if isinstance(obj, RegexType):
             return self.regex_repr(obj)
@@ -210,7 +223,7 @@ class DebugReprGenerator(object):
         except Exception: # pragma: no cover
             info = '?'
         return u'<span class="brokenrepr">&lt;broken repr (%s)&gt;' \
-               u'</span>' % escape(info.decode('utf-8', 'ignore').strip())
+               u'</span>' % escape(force_str(info, 'utf-8', 'ignore').strip())
 
     def repr(self, obj):
         recursive = False
@@ -232,11 +245,12 @@ class DebugReprGenerator(object):
         if isinstance(obj, dict):
             title = 'Contents of'
             items = []
-            for key, value in obj.iteritems():
-                if not isinstance(key, basestring):
+            for key, value in six.iteritems(obj):
+                if not isinstance(key, (bytes,) + six.string_types):
                     items = None
                     break
-                items.append((key, self.repr(value)))
+                items.append((force_str(key, 'utf-8', 'ignore'),
+                              self.repr(value)))
         if items is None:
             items = []
             repr = self.repr(obj)

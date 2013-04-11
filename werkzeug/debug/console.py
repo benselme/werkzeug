@@ -51,7 +51,7 @@ class HTMLStringO(object):
         return val
 
     def _write(self, x):
-        if isinstance(x, str):
+        if isinstance(x, six.binary_type):
             x = x.decode('utf-8', 'replace')
         self._buffer.append(x)
 
