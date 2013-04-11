@@ -31,8 +31,8 @@ class ExceptionsTestCase(WerkzeugTestCase):
             resp = e.get_response({})
         else:
             self.fail('exception not raised')
-        self.assert_(resp is orig_resp)
-        self.assert_equal(resp.data, 'Hello World')
+        self.assertTrue(resp is orig_resp)
+        self.assert_equal(resp.data, b'Hello World')
 
     def test_aborter(self):
         abort = exceptions.abort
@@ -65,24 +65,23 @@ class ExceptionsTestCase(WerkzeugTestCase):
 
     def test_exception_repr(self):
         exc = exceptions.NotFound()
-        self.assert_equal(unicode(exc), '404: Not Found')
+        self.assert_equal(six.text_type(exc), '404: Not Found')
         self.assert_equal(repr(exc), "<NotFound '404: Not Found'>")
 
         exc = exceptions.NotFound('Not There')
-        self.assert_equal(unicode(exc), '404: Not There')
+        self.assert_equal(six.text_type(exc), '404: Not There')
         self.assert_equal(repr(exc), "<NotFound '404: Not There'>")
 
     def test_special_exceptions(self):
         exc = exceptions.MethodNotAllowed(['GET', 'HEAD', 'POST'])
         h = dict(exc.get_headers({}))
         self.assert_equal(h['Allow'], 'GET, HEAD, POST')
-        self.assert_('The method DELETE is not allowed' in exc.get_description({
+        self.assertIn('The method DELETE is not allowed', exc.get_description({
             'REQUEST_METHOD': 'DELETE'
         }))
 
 
-if not six.PY3:
-    def suite():
-        suite = unittest.TestSuite()
-        suite.addTest(unittest.makeSuite(ExceptionsTestCase))
-        return suite
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(ExceptionsTestCase))
+    return suite

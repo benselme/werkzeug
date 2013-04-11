@@ -152,7 +152,7 @@ class HTTPException(Exception):
     def __repr__(self):
         return '<%s \'%s\'>' % (self.__class__.__name__, self)
 
-if six.PY3:
+if not six.PY3:
     HTTPException.__unicode__ = HTTPException.__str__
     HTTPException.__str__ = lambda self: self.__unicode__().encode('utf-8')
 
