@@ -48,12 +48,11 @@ class CompatTestCase(WerkzeugTestCase):
         myresp = MyResponse('Foo')
         resp = Response.from_app(myresp, create_environ(method='GET'))
         assert resp.headers['x-foo'] == 'meh'
-        assert resp.data == 'Foo'
+        assert resp.data == b'Foo'
 
         warnings.resetwarnings()
 
-if not six.PY3:
-    def suite():
-        suite = unittest.TestSuite()
-        suite.addTest(unittest.makeSuite(CompatTestCase))
-        return suite
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(CompatTestCase))
+    return suite
