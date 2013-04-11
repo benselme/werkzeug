@@ -30,14 +30,14 @@ class SecureCookieTestCase(WerkzeugTestCase):
         assert c.should_save
         s = c.serialize()
 
-        c2 = SecureCookie.unserialize(s, 'foo')
+        c2 = SecureCookie.unserialize(s, b'foo')
         assert c is not c2
         assert not c2.new
         assert not c2.modified
         assert not c2.should_save
         assert c2 == c
 
-        c3 = SecureCookie.unserialize(s, 'wrong foo')
+        c3 = SecureCookie.unserialize(s, b'wrong foo')
         assert not c3.modified
         assert not c3.new
         assert c3 == {}
@@ -45,22 +45,21 @@ class SecureCookieTestCase(WerkzeugTestCase):
     def test_wrapper_support(self):
         req = Request.from_values()
         resp = Response()
-        c = SecureCookie.load_cookie(req, secret_key='foo')
+        c = SecureCookie.load_cookie(req, secret_key=b'foo')
         assert c.new
         c['foo'] = 42
-        assert c.secret_key == 'foo'
+        assert c.secret_key == b'foo'
         c.save_cookie(resp)
 
         req = Request.from_values(headers={
             'Cookie':  'session="%s"' % parse_cookie(resp.headers['set-cookie'])['session']
         })
-        c2 = SecureCookie.load_cookie(req, secret_key='foo')
+        c2 = SecureCookie.load_cookie(req, secret_key=b'foo')
         assert not c2.new
         assert c2 == c
 
 
-if not six.PY3:
-    def suite():
-        suite = unittest.TestSuite()
-        suite.addTest(unittest.makeSuite(SecureCookieTestCase))
-        return suite
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(SecureCookieTestCase))
+    return suite

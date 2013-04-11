@@ -38,6 +38,10 @@ def _find_hashlib_algorithms():
     return rv
 _hash_funcs = _find_hashlib_algorithms()
 
+if six.PY3:
+    ord_ = lambda c: c
+else:
+    ord_ = ord
 
 def safe_str_cmp(a, b):
     """This function compares strings in somewhat constant time.  This
@@ -51,7 +55,7 @@ def safe_str_cmp(a, b):
         return False
     rv = 0
     for x, y in izip(a, b):
-        rv |= ord(x) ^ ord(y)
+        rv |= ord_(x) ^ ord_(y)
     return rv == 0
 
 
