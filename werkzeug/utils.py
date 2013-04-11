@@ -321,6 +321,8 @@ def escape(s, quote=False):
         s = s.replace('"', "&quot;")
     return s
 
+if six.PY3:
+    unichr = chr
 
 def unescape(s):
     """The reverse function of `escape`.  This unescapes all the HTML
