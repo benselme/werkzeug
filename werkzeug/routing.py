@@ -98,6 +98,8 @@
 import re
 import posixpath
 from pprint import pformat
+import six
+
 try:
     from urllib.parse import urljoin
 except ImportError:
@@ -105,7 +107,7 @@ except ImportError:
 from werkzeug.urls import url_encode, url_quote
 from werkzeug.utils import redirect, format_string
 from werkzeug.exceptions import HTTPException, NotFound, MethodNotAllowed
-from werkzeug._internal import _get_environ
+from werkzeug._internal import _get_environ, force_str
 from werkzeug.datastructures import ImmutableDict, MultiDict
 
 
@@ -151,7 +153,7 @@ def _pythonize(value):
             pass
     if value[:1] == value[-1:] and value[0] in '"\'':
         value = value[1:-1]
-    return unicode(value)
+    return six.text_type(value)
 
 
 def parse_converter_args(argstr):
@@ -396,13 +398,13 @@ class RuleTemplateFactory(RuleFactory):
                 if rule.defaults:
                     new_defaults = {}
                     for key, value in rule.defaults.iteritems():
-                        if isinstance(value, basestring):
+                        if isinstance(value, six.string_types):
                             value = format_string(value, self.context)
                         new_defaults[key] = value
                 if rule.subdomain is not None:
                     subdomain = format_string(rule.subdomain, self.context)
                 new_endpoint = rule.endpoint
-                if isinstance(new_endpoint, basestring):
+                if isinstance(new_endpoint, six.string_types):
                     new_endpoint = format_string(new_endpoint, self.context)
                 yield Rule(
                     format_string(rule.rule, self.context),
@@ -685,7 +687,7 @@ class Rule(RuleFactory):
                     del groups['__suffix__']
 
                 result = {}
-                for name, value in groups.iteritems():
+                for name, value in six.iteritems(groups):
                     try:
                         value = self._converters[name].to_python(value)
                     except ValidationError:
@@ -763,7 +765,7 @@ class Rule(RuleFactory):
         # in case defaults are given we ensure taht either the value was
         # skipped or the value is the same as the default value.
         if defaults:
-            for key, value in defaults.iteritems():
+            for key, value in six.iteritems(defaults):
                 if key in values and value != values[key]:
                     return False
 
@@ -1122,8 +1124,8 @@ class Map(object):
             subdomain = self.default_subdomain
         if script_name is None:
             script_name = '/'
-        if isinstance(server_name, unicode):
-            server_name = server_name.encode('idna')
+        if isinstance(server_name, six.text_type):
+            server_name = force_str(server_name.encode('idna'))
         return MapAdapter(self, server_name, script_name, subdomain,
                           url_scheme, path_info, default_method, query_args)
 
@@ -1203,7 +1205,7 @@ class Map(object):
         """
         if self._remap:
             self._rules.sort(key=lambda x: x.match_compare_key())
-            for rules in self._rules_by_endpoint.itervalues():
+            for rules in six.itervalues(self._rules_by_endpoint):
                 rules.sort(key=lambda x: x.build_compare_key())
             self._remap = False
 
@@ -1366,7 +1368,7 @@ class MapAdapter(object):
         self.map.update()
         if path_info is None:
             path_info = self.path_info
-        if not isinstance(path_info, unicode):
+        if not isinstance(path_info, six.text_type):
             path_info = path_info.decode(self.map.charset,
                                          self.map.encoding_errors)
         if query_args is None:
@@ -1488,7 +1490,7 @@ class MapAdapter(object):
                     path, query_args, domain_part=domain_part)
 
     def encode_query_args(self, query_args):
-        if not isinstance(query_args, basestring):
+        if not isinstance(query_args, six.string_types):
             query_args = url_encode(query_args, self.map.charset)
         return query_args
 
@@ -1599,7 +1601,7 @@ class MapAdapter(object):
             if isinstance(values, MultiDict):
                 valueiter = values.iteritems(multi=True)
             else:
-                valueiter = values.iteritems()
+                valueiter = six.iteritems(values)
             values = dict((k, v) for k, v in valueiter if v is not None)
         else:
             values = {}

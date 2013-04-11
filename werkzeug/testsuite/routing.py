@@ -192,7 +192,7 @@ class RoutingTestCase(WerkzeugTestCase):
         dispatch = lambda p, q=False: Response.force_type(adapter.dispatch(view_func, p,
                                                           catch_http_exceptions=q), env)
 
-        assert dispatch('/').data == "('root', {})"
+        assert dispatch('/').data == b"('root', {})"
         assert dispatch('/foo').status_code == 301
         raise_this = r.NotFound()
         self.assert_raises(r.NotFound, lambda: dispatch('/bar'))
@@ -640,8 +640,7 @@ class RoutingTestCase(WerkzeugTestCase):
         url = a.build('foobar', {}, force_external=True)
         self.assert_equal(url, 'http://xn--n3h.example.com/foo+bar/')
 
-if not six.PY3:
-    def suite():
-        suite = unittest.TestSuite()
-        suite.addTest(unittest.makeSuite(RoutingTestCase))
-        return suite
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(RoutingTestCase))
+    return suite
