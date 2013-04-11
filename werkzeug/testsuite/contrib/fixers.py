@@ -38,7 +38,7 @@ class ServerFixerTestCase(WerkzeugTestCase):
             PATH_INFO='/bar',
             SERVER_SOFTWARE='lighttpd/1.4.27'
         ))
-        assert response.data == 'PATH_INFO: /foo/bar\nSCRIPT_NAME: '
+        assert response.data == b'PATH_INFO: /foo/bar\nSCRIPT_NAME: '
 
     def test_path_info_from_request_uri_fix(self):
         app = fixers.PathInfoFromRequestUriFix(path_check_app)
@@ -46,7 +46,7 @@ class ServerFixerTestCase(WerkzeugTestCase):
             env = dict(create_environ(), SCRIPT_NAME='/test', PATH_INFO='/?????')
             env[key] = '/test/foo%25bar?drop=this'
             response = Response.from_app(app, env)
-            assert response.data == 'PATH_INFO: /foo%bar\nSCRIPT_NAME: /test'
+            assert response.data == b'PATH_INFO: /foo%bar\nSCRIPT_NAME: /test'
 
     def test_proxy_fix(self):
         @fixers.ProxyFix
@@ -67,7 +67,7 @@ class ServerFixerTestCase(WerkzeugTestCase):
 
         response = Response.from_app(app, environ)
 
-        assert response.data == '1.2.3.4|example.com'
+        assert response.data == b'1.2.3.4|example.com'
 
         # And we must check that if it is a redirection it is
         # correctly done:
@@ -89,7 +89,7 @@ class ServerFixerTestCase(WerkzeugTestCase):
         )
 
         response = Response.from_app(app, environ)
-        self.assert_equal(response.data, '127.0.0.1')
+        self.assert_equal(response.data, b'127.0.0.1')
 
     def test_header_rewriter_fix(self):
         @Request.application
@@ -121,7 +121,7 @@ class BrowserFixerTestCase(WerkzeugTestCase):
         ])
 
         # IE gets no vary
-        assert response.data == 'binary data here'
+        assert response.data == b'binary data here'
         assert 'vary' not in response.headers
         assert response.headers['content-disposition'] == 'attachment; filename=foo.xls'
         assert response.headers['content-type'] == 'application/vnd.ms-excel'
@@ -129,7 +129,7 @@ class BrowserFixerTestCase(WerkzeugTestCase):
         # other browsers do
         c = Client(application, Response)
         response = c.get('/')
-        assert response.data == 'binary data here'
+        assert response.data == b'binary data here'
         assert 'vary' in response.headers
 
         cc = ResponseCacheControl()
@@ -151,7 +151,7 @@ class BrowserFixerTestCase(WerkzeugTestCase):
         response = c.get('/', headers=[
             ('User-Agent', 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)')
         ])
-        assert response.data == 'binary data here'
+        assert response.data == b'binary data here'
         assert 'pragma' not in response.headers
         assert 'cache-control' not in response.headers
         assert response.headers['content-disposition'] == 'attachment; filename=foo.xls'
@@ -162,14 +162,14 @@ class BrowserFixerTestCase(WerkzeugTestCase):
         response = c.get('/', headers=[
             ('User-Agent', 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)')
         ])
-        assert response.data == 'binary data here'
+        assert response.data == b'binary data here'
         assert response.headers['pragma'] == 'x-foo'
         assert response.headers['cache-control'] == 'proxy-revalidate'
         assert response.headers['content-disposition'] == 'attachment; filename=foo.xls'
 
         # regular browsers get everything
         response = c.get('/')
-        assert response.data == 'binary data here'
+        assert response.data == b'binary data here'
         assert response.headers['pragma'] == 'no-cache, x-foo'
         cc = parse_cache_control_header(response.headers['cache-control'],
                                         cls=ResponseCacheControl)
@@ -179,9 +179,8 @@ class BrowserFixerTestCase(WerkzeugTestCase):
 
 
 
-if not six.PY3:
-    def suite():
-        suite = unittest.TestSuite()
-        suite.addTest(unittest.makeSuite(ServerFixerTestCase))
-        suite.addTest(unittest.makeSuite(BrowserFixerTestCase))
-        return suite
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(ServerFixerTestCase))
+    suite.addTest(unittest.makeSuite(BrowserFixerTestCase))
+    return suite
