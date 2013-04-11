@@ -38,11 +38,6 @@ def _find_hashlib_algorithms():
     return rv
 _hash_funcs = _find_hashlib_algorithms()
 
-if six.PY3:
-    ord_ = lambda c: c
-else:
-    ord_ = ord
-
 def safe_str_cmp(a, b):
     """This function compares strings in somewhat constant time.  This
     requires that the length of at least one string is known in advance.
@@ -55,8 +50,26 @@ def safe_str_cmp(a, b):
         return False
     rv = 0
     for x, y in izip(a, b):
-        rv |= ord_(x) ^ ord_(y)
+        rv |= ord(x) ^ ord(y)
     return rv == 0
+
+if six.PY3:
+    def safe_byte_cmp(a, b):
+        """This function compares strings in somewhat constant time.  This
+        requires that the length of at least one string is known in advance.
+
+        Returns `True` if the two strings are equal or `False` if they are not.
+
+        .. versionadded:: 0.9 (Python 3 branch)
+        """
+        if len(a) != len(b):
+            return False
+        rv = 0
+        for x, y in izip(a, b):
+            rv |= x ^ y
+        return rv == 0
+else:
+    safe_byte_cmp = safe_str_cmp
 
 
 def gen_salt(length):

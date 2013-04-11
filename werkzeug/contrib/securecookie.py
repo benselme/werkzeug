@@ -96,8 +96,7 @@ import six
 from werkzeug.urls import url_quote_plus, url_unquote_plus
 from werkzeug._internal import _date_to_unix, force_bytes, force_str
 from werkzeug.contrib.sessions import ModificationTrackingDict
-from werkzeug.security import safe_str_cmp
-
+from werkzeug.security import safe_str_cmp, safe_byte_cmp
 
 from hashlib import sha1 as _default_hash
 
@@ -264,7 +263,7 @@ class SecureCookie(ModificationTrackingDict):
                 client_hash = base64.b64decode(base64_hash)
             except Exception:
                 items = client_hash = None
-            if items is not None and safe_str_cmp(client_hash, mac.digest()):
+            if items is not None and safe_byte_cmp(client_hash, mac.digest()):
                 try:
                     for key, value in six.iteritems(items):
                         items[key] = cls.unquote(value)

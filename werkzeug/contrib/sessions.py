@@ -54,12 +54,15 @@ r"""
 import re
 import os
 import sys
+import six
 import tempfile
 from os import path
 from time import time
 from random import random
 from hashlib import sha1
 from six.moves import cPickle
+from werkzeug._internal import force_bytes
+
 dump, load, HIGHEST_PROTOCOL = (cPickle.dump, cPickle.load,
                                 cPickle.HIGHEST_PROTOCOL)
 
@@ -79,7 +82,7 @@ def _urandom():
 
 
 def generate_key(salt=None):
-    return sha1('%s%s%s' % (salt, time(), _urandom())).hexdigest()
+    return sha1(force_bytes('%s%s%s' % (salt, time(), _urandom()))).hexdigest()
 
 
 class ModificationTrackingDict(CallbackDict):
@@ -213,7 +216,7 @@ class FilesystemSessionStore(SessionStore):
         if path is None:
             path = tempfile.gettempdir()
         self.path = path
-        if isinstance(filename_template, unicode):
+        if not six.PY3 and isinstance(filename_template, six.text_type):
             filename_template = filename_template.encode(
                 sys.getfilesystemencoding() or 'utf-8')
         assert not filename_template.endswith(_fs_transaction_suffix), \
@@ -226,7 +229,7 @@ class FilesystemSessionStore(SessionStore):
         # out of the box, this should be a strict ASCII subset but
         # you might reconfigure the session object to have a more
         # arbitrary string.
-        if isinstance(sid, unicode):
+        if not six.PY3 and isinstance(sid, six.text_type):
             sid = sid.encode(sys.getfilesystemencoding() or 'utf-8')
         return path.join(self.path, self.filename_template % sid)
 

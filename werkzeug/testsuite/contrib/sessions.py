@@ -11,6 +11,7 @@
 import unittest
 import shutil
 import six
+from six.moves import xrange
 
 from werkzeug.testsuite import WerkzeugTestCase
 
@@ -76,8 +77,7 @@ class SessionTestCase(WerkzeugTestCase):
         assert sessions == listed_sessions
 
 
-if not six.PY3:
-    def suite():
-        suite = unittest.TestSuite()
-        suite.addTest(unittest.makeSuite(SessionTestCase))
-        return suite
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(SessionTestCase))
+    return suite
