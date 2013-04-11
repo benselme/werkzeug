@@ -81,7 +81,7 @@ class WrappersTestCase(WerkzeugTestCase):
         resp.mimetype_params['charset'] = 'iso-8859-15'
         assert resp.charset == 'iso-8859-15'
         resp.data = u'Hällo Wörld'
-        assert ''.join(resp.iter_encoded()) == \
+        assert b''.join(resp.iter_encoded()) == \
                u'Hällo Wörld'.encode('iso-8859-15')
         del resp.headers['content-type']
         try:
@@ -92,8 +92,7 @@ class WrappersTestCase(WerkzeugTestCase):
             assert False, 'expected type error on charset setting without ct'
 
 
-if not six.PY3:
-    def suite():
-        suite = unittest.TestSuite()
-        suite.addTest(unittest.makeSuite(WrappersTestCase))
-        return suite
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(WrappersTestCase))
+    return suite
