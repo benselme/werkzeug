@@ -15,6 +15,7 @@ import inspect
 import traceback
 import codecs
 import six
+from six.moves import xrange
 from tokenize import TokenError
 from werkzeug.utils import cached_property, escape
 from werkzeug.debug.console import Console
@@ -254,7 +255,11 @@ class Traceback(object):
     def exception(self):
         """String representation of the exception."""
         buf = traceback.format_exception_only(self.exc_type, self.exc_value)
-        return ''.join(buf).strip().decode('utf-8', 'replace')
+        if six.PY3:
+            return ''.join(buf).strip()
+        else:
+            return ''.join(buf).strip().decode('utf-8', 'replace')
+
     exception = property(exception)
 
     def log(self, logfile=None):
@@ -449,7 +454,7 @@ class Frame(object):
                 f.close()
 
         # already unicode?  return right away
-        if isinstance(source, unicode):
+        if isinstance(source, six.text_type):
             return source.splitlines()
 
         # yes. it should be ascii, but we don't want to reject too many

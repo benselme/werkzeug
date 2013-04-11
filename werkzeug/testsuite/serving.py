@@ -14,14 +14,19 @@ import urllib
 from six.moves import http_client as httplib
 import unittest
 from functools import update_wrapper
-from io import BytesIO
 import six
 
+from werkzeug._internal import force_bytes
 from werkzeug.testsuite import WerkzeugTestCase
-
 from werkzeug import __version__ as version, serving
 from werkzeug.testapp import test_app
 from threading import Thread
+
+try:
+    from urllib.request import urlopen
+    from urllib.error import HTTPError
+except ImportError:
+    from urllib2 import urlopen, HTTPError
 
 
 real_make_server = serving.make_server
@@ -30,7 +35,7 @@ real_make_server = serving.make_server
 def silencestderr(f):
     def new_func(*args, **kwargs):
         old_stderr = sys.stderr
-        sys.stderr = BytesIO()
+        sys.stderr = six.StringIO()
         try:
             return f(*args, **kwargs)
         finally:
@@ -66,18 +71,19 @@ class ServingTestCase(WerkzeugTestCase):
     @silencestderr
     def test_serving(self):
         server, addr = run_dev_server(test_app)
-        rv = urllib.urlopen('http://%s/?foo=bar&baz=blah' % addr).read()
-        assert 'WSGI Information' in rv
-        assert 'foo=bar&amp;baz=blah' in rv
-        assert ('Werkzeug/%s' % version) in rv
+        rv = urlopen('http://%s/?foo=bar&baz=blah' % addr).read()
+        self.assertIn(b'WSGI Information', rv)
+        self.assertIn(b'foo=bar&amp;baz=blah', rv)
+        self.assertIn(force_bytes('Werkzeug/{}'.format(version)), rv)
 
     @silencestderr
     def test_broken_app(self):
         def broken_app(environ, start_response):
             1/0
         server, addr = run_dev_server(broken_app)
-        rv = urllib.urlopen('http://%s/?foo=bar&baz=blah' % addr).read()
-        assert 'Internal Server Error' in rv
+        with self.assertRaises(HTTPError) as cm:
+            rv = urlopen('http://%s/?foo=bar&baz=blah' % addr).read()
+        self.assertEqual(cm.exception.code, 500)
 
     @silencestderr
     def test_absolute_requests(self):
@@ -92,11 +98,10 @@ class ServingTestCase(WerkzeugTestCase):
         conn = httplib.HTTPConnection(addr)
         conn.request('GET', 'http://surelynotexisting.example.com:1337/index.htm')
         res = conn.getresponse()
-        assert res.read() == 'YES'
+        self.assertEqual(res.read(), b'YES')
 
 
-if not six.PY3:
-    def suite():
-        suite = unittest.TestSuite()
-        suite.addTest(unittest.makeSuite(ServingTestCase))
-        return suite
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(ServingTestCase))
+    return suite

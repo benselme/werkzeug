@@ -62,7 +62,7 @@ except ImportError:
 import six
 
 import werkzeug
-from werkzeug._internal import _log
+from werkzeug._internal import _log, force_bytes
 from werkzeug.urls import _safe_urlsplit
 from werkzeug.exceptions import InternalServerError
 
@@ -141,7 +141,11 @@ class WSGIRequestHandler(BaseHTTPRequestHandler, object):
                     self.send_header('Date', self.date_time_string())
                 self.end_headers()
 
-            assert type(data) is str, 'applications must write bytes'
+            if not six.PY3:
+                assert type(data) is bytes, 'applications must write bytes'
+            else:
+                if type(data) is str:
+                    data = data.encode('ISO-8859-1')
             self.wfile.write(data)
             self.wfile.flush()
 
@@ -237,8 +241,9 @@ class WSGIRequestHandler(BaseHTTPRequestHandler, object):
         if message is None:
             message = code in self.responses and self.responses[code][0] or ''
         if self.request_version != 'HTTP/0.9':
-            self.wfile.write("%s %d %s\r\n" %
-                             (self.protocol_version, code, message))
+            self.wfile.write(force_bytes(
+                "%s %d %s\r\n" % (self.protocol_version, code, message),
+                'ISO-8859-1'))
 
     def version_string(self):
         return BaseHTTPRequestHandler.version_string(self).strip()

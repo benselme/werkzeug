@@ -158,8 +158,7 @@ def render_testapp(req):
         eggs = ()
     else:
         eggs = list(pkg_resources.working_set)
-        eggs.sort(lambda a, b: cmp(a.project_name.lower(),
-                                   b.project_name.lower()))
+        eggs.sort(key=lambda a: a.project_name.lower())
     python_eggs = []
     for egg in eggs:
         try:
@@ -173,7 +172,8 @@ def render_testapp(req):
 
     wsgi_env = []
     sorted_environ = req.environ.items()
-    sorted_environ.sort(key=lambda x: repr(x[0]).lower())
+    sorted_environ = sorted(sorted_environ,
+                            key=lambda x: repr(x[0]).lower())
     for key, value in sorted_environ:
         wsgi_env.append('<tr><th>%s<td><code>%s</code>' % (
             escape(str(key)),
