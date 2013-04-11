@@ -65,10 +65,9 @@ class IterITestSuite(WerkzeugTestCase):
         self.assert_raises(StopIteration, iterable.next)
 
 
-if not six.PY3:
-    def suite():
-        suite = unittest.TestSuite()
-        suite.addTest(unittest.makeSuite(IterOTestSuite))
-        if greenlet is not None:
-            suite.addTest(unittest.makeSuite(IterITestSuite))
-        return suite
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(IterOTestSuite))
+    if greenlet is not None:
+        suite.addTest(unittest.makeSuite(IterITestSuite))
+    return suite
