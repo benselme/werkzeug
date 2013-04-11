@@ -33,8 +33,8 @@ class InternalTestCase(WerkzeugTestCase):
     def test_easteregg(self):
         req = Request.from_values('/?macgybarchakku')
         resp = Response.force_type(internal._easteregg(None), req)
-        assert 'About Werkzeug' in resp.data
-        assert 'the Swiss Army knife of Python web development' in resp.data
+        assert b'About Werkzeug' in resp.data
+        assert b'the Swiss Army knife of Python web development' in resp.data
 
     def test_wrapper_internals(self):
         req = Request.from_values(data={'foo': 'bar'}, method='POST')
@@ -59,7 +59,7 @@ class InternalTestCase(WerkzeugTestCase):
         headers = response.get_wsgi_headers(create_environ())
         assert 'Content-Length' not in headers
 
-        response = Response(['Hällo Wörld'])
+        response = Response([b'H\xc2\x84llo W\xc2\x94rld'])
         headers = response.get_wsgi_headers(create_environ())
         assert 'Content-Length' in headers
 
@@ -76,8 +76,7 @@ class InternalTestCase(WerkzeugTestCase):
         resetwarnings()
 
 
-if not six.PY3:
-    def suite():
-        suite = unittest.TestSuite()
-        suite.addTest(unittest.makeSuite(InternalTestCase))
-        return suite
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(InternalTestCase))
+    return suite

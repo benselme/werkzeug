@@ -47,7 +47,7 @@ from werkzeug.datastructures import MultiDict, CombinedMultiDict, Headers, \
      ResponseCacheControl, RequestCacheControl, CallbackDict, \
      ContentRange
 from werkzeug._internal import _empty_stream, _decode_unicode, \
-     _patch_wrapper, _get_environ
+     _patch_wrapper, _get_environ, force_bytes, force_str
 
 
 def _run_wsgi_app(*args):
@@ -1019,7 +1019,9 @@ class BaseResponse(object):
         if self.automatically_set_content_length and \
            self.is_sequence and content_length is None and status != 304:
             try:
-                content_length = sum(len(str(x)) for x in self.response)
+                try_str = lambda s: s.decode('utf-8') if isinstance(s, bytes) else s.encode('ascii')
+                content_length = sum(len(try_str(x))
+                                     for x in self.response)
             except UnicodeError:
                 # aha, something non-bytestringy in there, too bad, we
                 # can't safely figure out the length of the response.

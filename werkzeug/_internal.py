@@ -8,6 +8,8 @@
     :copyright: (c) 2011 by the Werkzeug Team, see AUTHORS for more details.
     :license: BSD, see LICENSE for more details.
 """
+import zlib
+import base64
 import inspect
 import six
 from weakref import WeakKeyDictionary
@@ -354,7 +356,8 @@ class _DictAccessorProperty(object):
 
 def _easteregg(app):
     """Like the name says.  But who knows how it works?"""
-    gyver = '\n'.join([x + (77 - len(x)) * ' ' for x in '''
+    gyver = b'\n'.join([x + (77 - len(x)) * b' '
+                        for x in zlib.decompress(base64.b64decode(b'''
 eJyFlzuOJDkMRP06xRjymKgDJCDQStBYT8BCgK4gTwfQ2fcFs2a2FzvZk+hvlcRvRJD148efHt9m
 9Xz94dRY5hGt1nrYcXx7us9qlcP9HHNh28rz8dZj+q4rynVFFPdlY4zH873NKCexrDM6zxxRymzz
 4QIxzK4bth1PV7+uHn6WXZ5C4ka/+prFzx3zWLMHAVZb8RRUxtFXI5DTQ2n3Hi2sNI+HK43AOWSY
@@ -385,7 +388,7 @@ p1qXK3Du2mnr5INXmT/78KI12n11EFBkJHHp0wJyLe9MvPNUGYsf+170maayRoy2lURGHAIapSpQ
 krEDuNoJCHNlZYhKpvw4mspVWxqo415n8cD62N9+EfHrAvqQnINStetek7RY2Urv8nxsnGaZfRr/
 nhXbJ6m/yl1LzYqscDZA9QHLNbdaSTTr+kFg3bC0iYbX/eQy0Bv3h4B50/SGYzKAXkCeOLI3bcAt
 mj2Z/FM1vQWgDynsRwNvrWnJHlespkrp8+vO1jNaibm+PhqXPPv30YwDZ6jApe3wUjFQobghvW9p
-7f2zLkGNv8b191cD/3vs9Q833z8t'''.decode('base64').decode('zlib').splitlines()])
+7f2zLkGNv8b191cD/3vs9Q833z8t''')).splitlines()])
     def easteregged(environ, start_response):
         def injecting_start_response(status, headers, exc_info=None):
             headers.append(('X-Powered-By', 'Werkzeug'))
