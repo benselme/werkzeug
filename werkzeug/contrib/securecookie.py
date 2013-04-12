@@ -234,6 +234,7 @@ class SecureCookie(ModificationTrackingDict):
         :param secret_key: the secret key used to serialize the cookie.
         :return: a new :class:`SecureCookie`.
         """
+        secret_key = force_bytes(secret_key)
         if isinstance(string, six.text_type):
             string = string.encode('utf-8', 'replace')
         try:
@@ -292,6 +293,7 @@ class SecureCookie(ModificationTrackingDict):
                            Always provide the value even though it has
                            no default!
         """
+        secret_key = force_bytes(secret_key)
         data = request.cookies.get(key)
         if not data:
             return cls(secret_key=secret_key)
