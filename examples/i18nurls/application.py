@@ -3,7 +3,7 @@ from werkzeug.templates import Template
 from werkzeug.wrappers import BaseRequest, BaseResponse
 from werkzeug.routing import NotFound, RequestRedirect
 from werkzeug.exceptions import HTTPException, NotFound
-from i18nurls.urls import map
+from .urls import map
 
 TEMPLATES = path.join(path.dirname(__file__), 'templates')
 views = {}
@@ -61,7 +61,7 @@ class TemplateResponse(Response):
 class Application(object):
 
     def __init__(self):
-        from i18nurls import views
+        from . import views
         self.not_found = views.page_not_found
 
     def __call__(self, environ, start_response):
@@ -81,6 +81,6 @@ class Application(object):
                 resp = views[endpoint](req, **args)
         except NotFound:
             resp = self.not_found(req)
-        except (RequestRedirect, HTTPException), e:
+        except (RequestRedirect, HTTPException) as e:
             resp = e
         return resp(environ, start_response)
