@@ -594,8 +594,8 @@ def restart_with_reloader():
         # environment and subprocess.call does not like this, encode them
         # to latin1 and continue.
         if os.name == 'nt':
-            for key, value in new_environ.iteritems():
-                if isinstance(value, unicode):
+            for key, value in six.iteritems(new_environ):
+                if not six.PY3 and isinstance(value, unicode):
                     new_environ[key] = value.encode('iso-8859-1')
 
         exit_code = subprocess.call(args, env=new_environ)

@@ -74,6 +74,7 @@ import sys
 import inspect
 import getopt
 from os.path import basename
+import six
 
 
 argument_types = {
@@ -168,7 +169,7 @@ def run(namespace=None, action_prefix='action_', args=None):
             fail('Invalid value for \'%s\': %s' % (key, value))
 
     newargs = {}
-    for k, v in arguments.iteritems():
+    for k, v in six.iteritems(arguments):
         newargs[k.startswith('no_') and k[3:] or k] = v
     arguments = newargs
     return func(**arguments)
@@ -176,14 +177,14 @@ def run(namespace=None, action_prefix='action_', args=None):
 
 def fail(message, code=-1):
     """Fail with an error."""
-    print >> sys.stderr, 'Error:', message
+    print('Error:', message, file=sys.stderr)
     sys.exit(code)
 
 
 def find_actions(namespace, action_prefix):
     """Find all the actions in the namespace."""
     actions = {}
-    for key, value in namespace.iteritems():
+    for key, value in six.iteritems(namespace):
         if key.startswith(action_prefix):
             actions[key[len(action_prefix):]] = analyse_action(value)
     return actions
