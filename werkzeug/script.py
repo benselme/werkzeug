@@ -177,7 +177,7 @@ def run(namespace=None, action_prefix='action_', args=None):
 
 def fail(message, code=-1):
     """Fail with an error."""
-    print('Error:', message, file=sys.stderr)
+    six.print_('Error:', message, file=sys.stderr)
     sys.exit(code)
 
 
