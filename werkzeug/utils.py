@@ -322,7 +322,9 @@ def escape(s, quote=False):
     return s
 
 if six.PY3:
-    unichr = chr
+    unichr_ = chr
+else:
+    unichr_ = unichr
 
 def unescape(s):
     """The reverse function of `escape`.  This unescapes all the HTML
@@ -333,12 +335,12 @@ def unescape(s):
     def handle_match(m):
         name = m.group(1)
         if name in HTMLBuilder._entities:
-            return unichr(HTMLBuilder._entities[name])
+            return unichr_(HTMLBuilder._entities[name])
         try:
             if name[:2] in ('#x', '#X'):
-                return unichr(int(name[2:], 16))
+                return unichr_(int(name[2:], 16))
             elif name.startswith('#'):
-                return unichr(int(name[1:]))
+                return unichr_(int(name[1:]))
         except ValueError:
             pass
         return u''
