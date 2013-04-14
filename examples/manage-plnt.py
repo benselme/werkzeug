@@ -10,6 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 import os
+import tempfile
 from werkzeug import script
 
 
@@ -17,7 +18,8 @@ def make_app():
     """Helper function that creates a plnt app."""
     from plnt import Plnt
     database_uri = os.environ.get('PLNT_DATABASE_URI')
-    app = Plnt(database_uri or 'sqlite:////tmp/plnt.db')
+    default_db_filename = os.path.join(tempfile.gettempdir(), "shorty.db")
+    app = Plnt(database_uri or 'sqlite:///{0}'.format(default_db_filename))
     app.bind_to_context()
     return app
 
@@ -51,7 +53,7 @@ def action_initdb():
     for blog in blogs:
         session.add(blog)
     session.commit()
-    print 'Initialized database, now run manage-plnt.py sync to get the posts'
+    print('Initialized database, now run manage-plnt.py sync to get the posts')
 
 
 def action_sync():
